@@ -61,3 +61,6 @@ select { display: block; width: 100%; border: 1px solid #3a4b59; padding: 13px; 
 .diagnostics p { margin: 7px 0 0; border-top: 1px solid #294053; padding-top: 8px; font-size: 10px; line-height: 1.45; color: #8bb5cf; }
 .manual-tests { display: flex; flex-wrap: wrap; gap: 12px; }
 .manual-tests .quiet { white-space: nowrap; }
+
+#localAvatar { display: block; width: 100%; border: 1px dashed #476075; border-radius: 6px; padding: 10px; background: #0e1925; color: #bbccdb; font-size: 11px; }
+#localAvatar::file-selector-button { padding: 7px 10px; border: 1px solid #426079; border-radius: 4px; margin-right: 10px; background: #1c3346; color: #e6f1fb; cursor: pointer; }
