@@ -43,3 +43,11 @@ test("jaw retargeting is quiet at rest and bounded while speaking", () => {
   assert.ok(jawAngle(0.6) < 0.3);
   assert.equal(jawAngle(1), 0.3);
 });
+
+test("ARKit targets preserve sensor values for eyelid and mouth morphs", () => {
+  const pose = mapFace(sample(0.5, 0.48));
+  assert.equal(pose.expressions.jawOpen, 0.48);
+  assert.equal(pose.expressions.eyeBlinkLeft, 0.6);
+  assert.equal(pose.expressions.eyeBlinkRight, 0.2);
+  assert.equal(pose.expressions.missing, undefined);
+});
