@@ -30,3 +30,10 @@ export function mapFace(result, neutral = null) {
     detected: true,
   };
 }
+
+// Rig-specific jaw retargeting: ignore small resting-mouth noise and
+// cap the angle to avoid an exaggerated "hinged jaw" effect.
+export function jawAngle(score, { deadzone = 0.12, maxScore = 0.85, maxRadians = 0.30 } = {}) {
+  const normalized = clamp((score - deadzone) / (maxScore - deadzone), 0, 1);
+  return Math.pow(normalized, 1.25) * maxRadians;
+}
