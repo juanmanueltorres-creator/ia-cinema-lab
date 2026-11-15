@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/+esm";
-import { mapFace, clamp } from "./face-map.mjs";
+import { mapFace, clamp, jawAngle } from "./face-map.mjs";
 
 // Isolated technical spike: no backend, no face uploads, no paid APIs.
 // Upstream sample models: PrivacyPuppet (MIT repository; see README and asset caveats).
@@ -230,7 +230,7 @@ function animateRig(t) {
   applyBone(nodes.head, rest.head, state.pitch * 0.72 + idle, -state.yaw * 0.75, state.roll * 0.5);
   applyBone(nodes.neck, rest.neck, state.pitch * 0.22, -state.yaw * 0.22);
   if (nodes.jaw) {
-    qRot.setFromAxisAngle(xAxis, clamp(state.jaw * 1.5, 0, 1) * 0.45);
+    qRot.setFromAxisAngle(xAxis, performance.now() < testJawUntil ? 0.30 : jawAngle(state.jaw));
     qTarget.copy(rest.jaw).multiply(qRot);
     nodes.jaw.quaternion.slerp(qTarget, 0.2);
   }
