@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mapFace, clamp } from "./face-map.mjs";
+import { mapFace, clamp, jawAngle } from "./face-map.mjs";
 
 const sample = (noseX = 0.5, jaw = 0.4) => {
   const points = Array.from({ length: 264 }, () => ({ x: 0.5, y: 0.5 }));
@@ -34,4 +34,12 @@ test("cambios y límites estables", () => {
   assert.ok(shifted.yaw > 0);
   assert.equal(shifted.jaw, 1);
   assert.equal(clamp(-5, -1, 1), -1);
+});
+
+test("jaw retargeting is quiet at rest and bounded while speaking", () => {
+  assert.equal(jawAngle(0), 0);
+  assert.equal(jawAngle(0.1), 0);
+  assert.ok(jawAngle(0.6) > 0.1);
+  assert.ok(jawAngle(0.6) < 0.3);
+  assert.equal(jawAngle(1), 0.3);
 });
