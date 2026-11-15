@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080d14" />
+    <meta name="description" content="Prueba experimental de interpretación facial con webcam y avatares humanos 3D." />
+    <title>Camera Study — IA Cinema Lab</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">◈</span> IA CINEMA LAB <span class="muted">/ LAB 01</span></div>
+      <a href="https://github.com/juanmanueltorres-creator/ia-cinema-lab" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+    </header>
+    <main class="workspace">
+      <section class="stage-shell" aria-label="Escena del avatar">
+        <div class="stage-top">
+          <span class="eyebrow">CAMERA-TO-PUPPET / EXPERIMENTAL</span>
+          <span id="fps" class="metrics">— FPS</span>
+        </div>
+        <canvas id="stage" aria-label="Avatar 3D animado"></canvas>
+        <div class="stage-overlay">
+          <span class="live-dot" id="liveDot"></span>
+          <span id="trackingState" role="status">Cámara apagada · movimiento de reposo</span>
+        </div>
+        <div class="stage-bottom">
+          <span id="modelState">Cargando personaje...</span>
+          <span class="tag">WebGL / MediaPipe</span>
+        </div>
+      </section>
+      <aside class="sidebar">
+        <p class="eyebrow">ESTUDIO DE MOVIMIENTO · V0.1</p>
+        <h1>Tu actuación.<br /><em>Otro personaje.</em></h1>
+        <p class="intro">Probá la captura facial en tu navegador. El rostro se procesa en este dispositivo; no se sube una grabación.</p>
+
+        <label class="field" for="avatar">Personaje humano</label>
+        <select id="avatar">
+          <option value="liam">Liam</option>
+          <option value="yuki">Yuki</option>
+          <option value="kofi">Kofi</option>
+        </select>
+        <label class="field" for="lighting">Iluminación</label>
+        <select id="lighting">
+          <option value="studio">Studio neutral</option>
+          <option value="noir">Cinematic noir</option>
+          <option value="warm">Warm portrait</option>
+        </select>
+
+        <div class="preview-header"><span class="field">Webcam / vista previa</span><span class="caption">Solo visible para vos</span></div>
+        <div class="camera-panel">
+          <video id="camera" autoplay muted playsinline></video>
+          <div id="cameraPlaceholder">Cámara desactivada</div>
+        </div>
+        <div class="actions">
+          <button id="start" class="primary">Activar cámara</button>
+          <button id="stop" class="secondary" disabled>Detener</button>
+        </div>
+        <button id="calibrate" class="quiet" disabled>Calibrar mirando de frente</button>
+        <div class="separator"></div>
+        <p class="field">Capturar prueba</p>
+        <button id="record" class="secondary wide" disabled>● Grabar escena</button>
+        <p class="footnote">Exportación local. El micrófono se solicita únicamente al grabar y es opcional.</p>
+        <p id="message" class="message" role="status" aria-live="polite">Esperando carga del personaje.</p>
+        <div class="reference">
+          <strong>Referencia técnica</strong>
+          <p>Personajes de <a href="https://github.com/privacypuppet/privacypuppet" target="_blank" rel="noopener noreferrer">PrivacyPuppet ↗</a>. Captura con MediaPipe. Prueba independiente; no es un producto terminado.</p>
+        </div>
+      </aside>
+    </main>
+  </body>
+</html>
