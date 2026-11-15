@@ -260,6 +260,13 @@ function applyBone(node, rest, x, y = 0, z = 0, factor = 0.17) {
 function animateRig(t) {
   if (!rig) return;
   const state = { yaw: 0, pitch: 0, roll: 0, jaw: 0, blinkLeft: 0, blinkRight: 0, lookLeft: 0, ...pose };
+  if (!stream && !pose) {
+    // Procedural idle blinking, like the upstream demo, only visible on rigged eyes.
+    const phase = (t + 0.7) % 4.3;
+    const blink = phase < 0.16 ? Math.sin(Math.PI * phase / 0.16) : 0;
+    state.blinkLeft = blink;
+    state.blinkRight = blink;
+  }
   if (performance.now() < testJawUntil) state.jaw = 1;
   if (performance.now() < testBlinkUntil) {
     state.blinkLeft = 1;
