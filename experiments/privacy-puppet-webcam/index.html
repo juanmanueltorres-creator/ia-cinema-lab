@@ -48,7 +48,12 @@
           <option value="liam">Liam</option>
           <option value="yuki">Yuki</option>
           <option value="kofi">Kofi</option>
+          <option value="facecap">FaceCap · prueba de párpados (ARKit)</option>
+          <option value="custom">Mi GLB con expresiones</option>
         </select>
+        <label class="field" for="localAvatar">GLB propio · no se sube</label>
+        <input id="localAvatar" type="file" accept=".glb,model/gltf-binary" aria-label="Elegir avatar GLB de tu equipo" />
+        <p class="footnote">Los archivos GLB con ARKit (eyeBlinkLeft/Right) pueden reproducir tu parpadeo. FaceCap es una cabeza de referencia, no un actor terminado.</p>
         <label class="field" for="lighting">Iluminación</label>
         <select id="lighting">
           <option value="studio">Studio neutral</option>
