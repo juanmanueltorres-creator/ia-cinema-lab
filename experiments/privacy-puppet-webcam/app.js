@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/+esm";
-import { mapFace, clamp, jawAngle } from "./face-map.mjs";
+import { mapFace, clamp, jawAngle, expressionName, applyExpressions } from "./face-map.mjs";
 
 // Isolated technical spike: no backend, no face uploads, no paid APIs.
 // Upstream sample models: PrivacyPuppet (MIT repository; see README and asset caveats).
@@ -11,6 +11,7 @@ const AVATARS = {
   liam: { file: "liam-v2.glb", y: -1.45 },
   yuki: { file: "yuki-v2.glb", y: -1.15 },
   kofi: { file: "kofi-v2.glb", y: -1.45 },
+  mpfbtest: { url: "./assets/mpfb-blink-test.glb", autoFit: true, uncompressed: true },
   // Scan-style head with 52 ARKit shapes: visual test of real eyelid movement.
   // Source: Three.js examples, model supplied by Face Cap. No local redistribution.
   facecap: {
@@ -35,9 +36,9 @@ const blinkLMeter = $("blinkLMeter");
 const blinkRMeter = $("blinkRMeter");
 const rigSupport = $("rigSupport");
 const testJaw = $("testJaw");
-const testBlink = $("testBlink");
 let testJawUntil = 0;
 let testBlinkUntil = 0;
+let testBlinkSide = "both";
 
 
 let stream = null;
@@ -109,7 +110,9 @@ window.addEventListener("resize", resize);
 function getBones(object) {
   const bones = {};
   const meshes = [];
+  const hierarchy = [];
   object.traverse((node) => {
+    hierarchy.push({ name: node.name, type: node.type, parent: node.parent?.name ?? null });
     if (node.isBone) bones[node.name.toLowerCase()] = node;
     if (node.isMesh) {
       meshes.push(node);
@@ -142,13 +145,13 @@ function getBones(object) {
   const rest = Object.fromEntries(
     Object.entries(nodes).map(([name, node]) => [name, node?.quaternion.clone() ?? null])
   );
-  return { nodes, rest, meshes };
+  return { nodes, rest, meshes, hierarchy };
 }
 
 function hasMorphTargets(meshes, candidates) {
   return meshes.some((mesh) => {
     const d = mesh.morphTargetDictionary;
-    return d && candidates.some((name) => d[name] !== undefined);
+    return d && Object.keys(d).some((name) => candidates.includes(expressionName(name)));
   });
 }
 
@@ -156,14 +159,22 @@ function updateRigCapabilities() {
   if (!rig) {
     rigSupport.textContent = "El avatar todavía no está disponible.";
     testJaw.disabled = true;
-    testBlink.disabled = true;
+    document.querySelectorAll("[data-blink]").forEach((button) => { button.disabled = true; });
+    $("rigChannels").textContent = "Sin modelo cargado.";
     return;
   }
   const hasJaw = Boolean(rig.nodes.jaw) || hasMorphTargets(rig.meshes, ["jawOpen", "mouthOpen"]);
   const hasBlink = hasMorphTargets(rig.meshes, ["eyeBlinkLeft", "blink_left"])
     && hasMorphTargets(rig.meshes, ["eyeBlinkRight", "blink_right"]);
   testJaw.disabled = !hasJaw;
-  testBlink.disabled = !hasBlink;
+  document.querySelectorAll("[data-blink]").forEach((button) => {
+    const side = button.dataset.blink;
+    button.disabled = side === "both" ? !hasBlink : !hasMorphTargets(rig.meshes, [side === "left" ? "eyeBlinkLeft" : "eyeBlinkRight"]);
+  });
+  $("rigChannels").textContent = JSON.stringify({
+    hierarchy: rig.hierarchy,
+    meshes: rig.meshes.map((mesh) => ({ mesh: mesh.name, morphTargets: mesh.morphTargetDictionary ?? {} })),
+  }, null, 2);
   rigSupport.textContent = "Avatar: mandíbula " + (hasJaw ? "compatible" : "sin control")
     + " · párpados " + (hasBlink ? "compatibles" : "SIN blendshapes de parpadeo");
 }
@@ -175,6 +186,20 @@ function updateSignals(state) {
 }
 
 const loader = new GLTFLoader();
+let compressedLoaderReady = null;
+let ktx2Loader = null;
+function enableCompressedModels() {
+  if (!compressedLoaderReady) compressedLoaderReady = Promise.all([
+    import("three/addons/libs/meshopt_decoder.module.js"),
+    import("three/addons/loaders/KTX2Loader.js"),
+  ]).then(([{ MeshoptDecoder }, { KTX2Loader }]) => {
+    ktx2Loader = new KTX2Loader()
+      .setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/libs/basis/")
+      .setWorkerLimit(1).detectSupport(renderer);
+    loader.setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2Loader);
+  }).catch((error) => { compressedLoaderReady = null; throw error; });
+  return compressedLoaderReady;
+}
 function loadGLB(url) {
   return new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
 }
@@ -195,6 +220,7 @@ async function loadModel(name) {
   avatarSelect.disabled = true;
   recordButton.disabled = true;
   try {
+    if (config.autoFit && !config.uncompressed) await enableCompressedModels();
     let gltf;
     if (config.url) {
       gltf = await loadGLB(config.url);
@@ -269,8 +295,8 @@ function animateRig(t) {
   }
   if (performance.now() < testJawUntil) state.jaw = 1;
   if (performance.now() < testBlinkUntil) {
-    state.blinkLeft = 1;
-    state.blinkRight = 1;
+    state.blinkLeft = testBlinkSide === "right" ? 0 : 1;
+    state.blinkRight = testBlinkSide === "left" ? 0 : 1;
   }
   const idle = Math.sin(t * 0.65) * 0.012;
   const { nodes, rest, meshes } = rig;
@@ -293,18 +319,7 @@ function animateRig(t) {
   for (const mesh of meshes) {
     const dict = mesh.morphTargetDictionary, influences = mesh.morphTargetInfluences;
     if (!dict || !influences) continue;
-    const set = (keys, value) => {
-      const index = keys.map((k) => dict[k]).find((v) => v !== undefined);
-      if (index !== undefined) influences[index] = THREE.MathUtils.lerp(influences[index], value, 0.25);
-    };
-    // Send the full MediaPipe face coefficients to matching ARKit targets.
-    // No fake eyelid overlay: geometry moves only when this asset supports it.
-    for (const [name, value] of Object.entries(state.expressions || {})) {
-      if (dict[name] !== undefined) set([name], value);
-    }
-    set(["jawOpen", "mouthOpen"], state.jaw);
-    set(["eyeBlinkLeft", "blink_left"], state.blinkLeft);
-    set(["eyeBlinkRight", "blink_right"], state.blinkRight);
+    applyExpressions(dict, influences, state);
   }
 }
 
@@ -513,10 +528,11 @@ testJaw.addEventListener("click", () => {
   testJawUntil = performance.now() + 1800;
   message.textContent = "Prueba manual: la mandíbula debería abrirse sin depender de la webcam.";
 });
-testBlink.addEventListener("click", () => {
+document.querySelectorAll("[data-blink]").forEach((button) => button.addEventListener("click", () => {
+  testBlinkSide = button.dataset.blink;
   testBlinkUntil = performance.now() + 900;
-  message.textContent = "Prueba manual de párpados: disponible solo con morph targets compatibles.";
-});
+  message.textContent = "Prueba manual 0 → 1 → 0; después vuelve al seguimiento o reposo.";
+}));
 avatarSelect.addEventListener("change", () => loadModel(avatarSelect.value));
 localAvatarInput.addEventListener("change", () => {
   const file = localAvatarInput.files?.[0];
@@ -534,6 +550,7 @@ localAvatarInput.addEventListener("change", () => {
 $("lighting").addEventListener("change", (event) => setLighting(event.target.value));
 window.addEventListener("pagehide", () => {
   stopCamera();
+  ktx2Loader?.dispose();
   if (lastRecordingUrl) URL.revokeObjectURL(lastRecordingUrl);
   if (customAvatarUrl) URL.revokeObjectURL(customAvatarUrl);
 });

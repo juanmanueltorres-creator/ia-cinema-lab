@@ -51,3 +51,25 @@ test("ARKit targets preserve sensor values for eyelid and mouth morphs", () => {
   assert.equal(pose.expressions.eyeBlinkRight, 0.2);
   assert.equal(pose.expressions.missing, undefined);
 });
+
+test("expression aliases resolve FaceCap and MPFB eyelids without touching demographic shapes", async () => {
+  const { expressionName } = await import("./face-map.mjs");
+  assert.equal(typeof expressionName, "function");
+  assert.equal(expressionName("eyeBlink_L"), "eyeBlinkLeft");
+  assert.equal(expressionName("eyeBlink_R"), "eyeBlinkRight");
+  assert.equal(expressionName("!ex-eyeBlinkLeft"), "eyeBlinkLeft");
+  assert.equal(expressionName("!ex-eyeBlinkRight"), "eyeBlinkRight");
+  assert.equal(expressionName("blink_left"), "eyeBlinkLeft");
+  assert.equal(expressionName("$md-age"), null);
+});
+
+test("expression application resets owned channels on face loss, preserving model shapes", async () => {
+  const { applyExpressions } = await import("./face-map.mjs");
+  assert.equal(typeof applyExpressions, "function");
+  const dict = { "!ex-eyeBlinkLeft": 0, eyeBlink_R: 1, jawOpen: 2, mouthSmileLeft: 3, "$md-age": 4 };
+  const values = [0, 0, 0, 0, 0.7];
+  applyExpressions(dict, values, { jaw: 0.4, blinkLeft: 1, blinkRight: 0.2, expressions: { mouthSmileLeft: 0.8 } }, 1);
+  assert.deepEqual(values, [1, 0.2, 0.4, 0.8, 0.7]);
+  applyExpressions(dict, values, null, 1);
+  assert.deepEqual(values, [0, 0, 0, 0, 0.7]);
+});

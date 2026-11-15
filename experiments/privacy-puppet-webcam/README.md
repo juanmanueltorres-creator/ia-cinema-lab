@@ -54,3 +54,19 @@ Para generar un personaje humano completo con párpados: MPFB2 2.0.15+ en Blende
 - [Face Cap GLB en Three.js r184](https://github.com/mrdoob/three.js/blob/r184/examples/models/gltf/facecap.glb) — cabeza de muestra con expresiones ARKit, crédito a Face Cap; se carga remotamente y no se distribuye dentro de este repositorio.
 
 El experimento usa JavaScript nativo deliberadamente: minimiza dependencias y permite probar la hipótesis antes de portar la integración al stack React/TypeScript especificado.
+
+## Issue #3: evidencia y limitaciones verificadas
+
+El visor resuelve nombres ARKit, `eyeBlink_L/R` de FaceCap, `blink_left/right` y prefijos MPFB2 `!ex-`. Aplica el mismo resolvedor al diagnóstico y a la animación. Al perder el rostro neutraliza canales faciales controlados, sin alterar morphs demográficos. El diagnóstico desplegable muestra jerarquía, huesos y diccionarios exactos del GLB, nunca datos de cámara.
+
+FaceCap r184 también necesita Meshopt y KTX2/Basis: ahora se cargan sus decodificadores versionados al seleccionar un modelo comprimido, no al cargar Liam/Kofi/Yuki. El shader y los modelos originales no se reemplazaron.
+
+**MPFB · cabeza de prueba** es un GLB separado generado con Blender + los dos targets de parpadeo de `faceunits01`: tiene cierre geométrico real, pero NO conserva el aspecto de los actores ni tiene boca articulada. Sirve para comprobar el camino `!ex-` y la captura, no como reemplazo. [Licencias y reproducción PowerShell](assets/README.md).
+
+La inspección de los tres GLB originales confirmó solo 4–5 targets demográficos y ningún `eyeBlink*`, `blink_*` o `!ex-*`. Liam importado tiene 11.234 vértices de cuerpo; la basemesh MPFB tiene 19.158. Los targets MPFB son indexados: aplicarlos directamente al GLB reordenado/recortado no es una conversión segura. El árbol público fijado de PrivacyPuppet no incluye `.blend`, `.mhm` ni `.mhclo`; hace falta recuperar las fuentes originales o diseñar y validar un retarget de huesos para conservar sus apariencias. No se declara resuelto el parpadeo de esos tres actores.
+
+Prueba sin cámara: seleccionar FaceCap o la cabeza MPFB, pulsar **Probar parpadeo**, **Probar ojo izquierdo** y **Probar ojo derecho**. Cada pulso cierra durante 900 ms y vuelve al seguimiento/reposo; izquierda/derecha son anatómicas, no la posición en pantalla. Observar la secuencia 0 → 1 → 0. [MPFB abierto](../../docs/evidence/issue-3/mpfb-open.png) / [cerrado](../../docs/evidence/issue-3/mpfb-closed.png); [FaceCap abierto](../../docs/evidence/issue-3/facecap-open.png) / [cerrado](../../docs/evidence/issue-3/facecap-closed.png).
+
+Verificación local: `node --check app.js`, `node --check face-map.mjs` y `node --test face-map.test.mjs`: 7/7 pruebas. Los dos tests nuevos fallaron antes del arreglo y pasaron después. Navegador Chromium headless en Windows: carga de Liam, mandíbula manual visible y cierre bilateral/independiente/reapertura de FaceCap y MPFB observados. El navegador no resolvía el CDN: la prueba enrutó las mismas dependencias públicas descargadas a temporales; no demuestra disponibilidad del CDN. Único 404 restante: favicon.
+
+**Pendiente de aceptación:** webcam real (ambos ojos e independientes), cara neutra al perder detección en vivo, boca/dientes/lengua durante habla y reproducción de una grabación audiovisual; Chrome/Firefox interactivos y FPS con MediaPipe. No se activó cámara ni micrófono en la automatización. La captura y el grabador existentes no se modificaron; esto no equivale a haber validado la grabación completa.

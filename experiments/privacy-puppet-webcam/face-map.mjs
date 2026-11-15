@@ -39,3 +39,25 @@ export function jawAngle(score, { deadzone = 0.12, maxScore = 0.85, maxRadians =
   const normalized = clamp((score - deadzone) / (maxScore - deadzone), 0, 1);
   return Math.pow(normalized, 1.25) * maxRadians;
 }
+
+// Canonical MediaPipe/ARKit channels only; demographic shape keys remain untouched.
+const FACE_CHANNEL = /^(?:brow|cheek|eye|jaw|mouth|nose|tongue)[A-Z][A-Za-z]*$/;
+const EXPRESSION_ALIASES = {
+  eyeBlink_L: "eyeBlinkLeft", eyeBlink_R: "eyeBlinkRight",
+  blink_left: "eyeBlinkLeft", blink_right: "eyeBlinkRight",
+  mouthOpen: "jawOpen",
+};
+export function expressionName(target) {
+  const name = target.startsWith("!ex-") ? target.slice(4) : target;
+  return EXPRESSION_ALIASES[name] ?? (FACE_CHANNEL.test(name) ? name : null);
+}
+
+export function applyExpressions(dictionary, influences, state, factor = 0.25) {
+  for (const [target, index] of Object.entries(dictionary)) {
+    const name = expressionName(target);
+    if (!name) continue;
+    const override = { jawOpen: state?.jaw, eyeBlinkLeft: state?.blinkLeft, eyeBlinkRight: state?.blinkRight };
+    const value = clamp(override[name] ?? state?.expressions?.[name] ?? 0, 0, 1);
+    influences[index] += (value - influences[index]) * factor;
+  }
+}

@@ -49,6 +49,7 @@
           <option value="yuki">Yuki</option>
           <option value="kofi">Kofi</option>
           <option value="facecap">FaceCap · prueba de párpados (ARKit)</option>
+          <option value="mpfbtest">MPFB · cabeza de prueba (no reemplaza personajes)</option>
           <option value="custom">Mi GLB con expresiones</option>
         </select>
         <label class="field" for="localAvatar">GLB propio · no se sube</label>
@@ -71,6 +72,7 @@
           <div><span>Parpadeo izquierdo</span><strong id="blinkLMeter">—</strong></div>
           <div><span>Parpadeo derecho</span><strong id="blinkRMeter">—</strong></div>
           <p id="rigSupport">Comprobando capacidades del avatar...</p>
+          <details><summary>Canales exactos del GLB (sin datos faciales)</summary><pre id="rigChannels" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:12rem;overflow:auto"></pre></details>
         </div>
         <div class="actions">
           <button id="start" class="primary">Activar cámara</button>
@@ -79,7 +81,9 @@
         <button id="calibrate" class="quiet" disabled>Calibrar mirando de frente</button>
         <div class="manual-tests">
           <button id="testJaw" class="quiet" disabled>Probar mandíbula sin cámara</button>
-          <button id="testBlink" class="quiet" disabled>Probar parpadeo</button>
+          <button id="testBlink" data-blink="both" class="quiet" disabled>Probar parpadeo</button>
+          <button data-blink="left" class="quiet" disabled>Probar ojo izquierdo</button>
+          <button data-blink="right" class="quiet" disabled>Probar ojo derecho</button>
         </div>
         <div class="separator"></div>
         <p class="field">Capturar prueba</p>
