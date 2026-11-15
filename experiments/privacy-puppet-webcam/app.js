@@ -11,6 +11,12 @@ const AVATARS = {
   liam: { file: "liam-v2.glb", y: -1.45 },
   yuki: { file: "yuki-v2.glb", y: -1.15 },
   kofi: { file: "kofi-v2.glb", y: -1.45 },
+  // Scan-style head with 52 ARKit shapes: visual test of real eyelid movement.
+  // Source: Three.js examples, model supplied by Face Cap. No local redistribution.
+  facecap: {
+    url: "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r184/examples/models/gltf/facecap.glb",
+    autoFit: true,
+  },
 };
 const $ = (id) => document.getElementById(id);
 const canvas = $("stage");
@@ -23,6 +29,7 @@ const startButton = $("start");
 const stopButton = $("stop");
 const calibrateButton = $("calibrate");
 const avatarSelect = $("avatar");
+const localAvatarInput = $("localAvatar");
 const jawMeter = $("jawMeter");
 const blinkLMeter = $("blinkLMeter");
 const blinkRMeter = $("blinkRMeter");
@@ -49,6 +56,8 @@ let recorderStream = null;
 let microphone = null;
 let chunks = [];
 let lastRecordingUrl = null;
+let customAvatarUrl = null;
+let currentHeadOnly = false;
 
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
@@ -171,35 +180,66 @@ function loadGLB(url) {
 }
 async function loadModel(name) {
   const token = ++loadToken;
-  const config = AVATARS[name];
-  if (!config) return;
-  modelState.textContent = "Descargando modelo 3D (15–18 MB)...";
+  const config = name === "custom" && customAvatarUrl
+    ? { url: customAvatarUrl, autoFit: true, local: true }
+    : AVATARS[name];
+  if (!config) {
+    message.textContent = name === "custom"
+      ? "Seleccioná primero un archivo .glb de tu equipo."
+      : "No se encontró ese personaje.";
+    return;
+  }
+  modelState.textContent = config.autoFit
+    ? "Cargando cabeza con expresiones ARKit..."
+    : "Descargando modelo 3D (15–18 MB)...";
   avatarSelect.disabled = true;
   recordButton.disabled = true;
   try {
     let gltf;
-    try {
-      gltf = await loadGLB(ORIGIN + config.file);
-    } catch (firstError) {
-      console.warn("CDN de modelos no disponible; intentando repositorio original.", firstError);
-      gltf = await loadGLB(FALLBACK + config.file);
+    if (config.url) {
+      gltf = await loadGLB(config.url);
+    } else {
+      try {
+        gltf = await loadGLB(ORIGIN + config.file);
+      } catch (firstError) {
+        console.warn("CDN de modelos no disponible; intentando repositorio original.", firstError);
+        gltf = await loadGLB(FALLBACK + config.file);
+      }
     }
     if (token !== loadToken) return;
     if (currentModel) root.remove(currentModel);
-    currentModel = gltf.scene;
-    currentModel.position.set(0, config.y, 0);
+    // The wrapper gives imported heads an actual center-of-rotation pivot.
+    const wrapper = new THREE.Group();
+    const model = gltf.scene;
+    if (config.autoFit) {
+      const bounds = new THREE.Box3().setFromObject(model);
+      const size = bounds.getSize(new THREE.Vector3());
+      const center = bounds.getCenter(new THREE.Vector3());
+      if (!Number.isFinite(size.y) || size.y < 0.001) throw new Error("Invalid model bounds");
+      const scale = 0.44 / size.y;
+      model.scale.setScalar(scale);
+      model.position.set(-center.x * scale, -center.y * scale + 0.10, -center.z * scale);
+    } else {
+      model.position.set(0, config.y, 0);
+    }
+    wrapper.add(model);
+    currentModel = wrapper;
+    currentHeadOnly = Boolean(config.autoFit);
     root.add(currentModel);
     rig = getBones(currentModel);
     updateRigCapabilities();
-    modelState.textContent = name.toUpperCase() + " · Modelo 3D cargado";
-    message.textContent = "Listo. Activá la cámara para controlar la cabeza y la mandíbula.";
+    const label = name === "custom" ? "GLB propio" : name.toUpperCase();
+    modelState.textContent = label + " · Modelo cargado";
+    message.textContent = config.autoFit
+      ? "Prueba de párpados: activá cámara y parpadeá o usá el botón manual."
+      : "Listo. Activá la cámara para controlar cabeza y mandíbula.";
     recordButton.disabled = !stream;
   } catch (error) {
     if (token !== loadToken) return;
     rig = null;
     updateRigCapabilities();
     modelState.textContent = "Error al cargar modelo";
-    message.textContent = "No se pudo descargar el modelo. Probá otro personaje o revisá tu conexión.";
+    message.textContent = "No se pudo cargar el GLB. Revisá compatibilidad o probá otro personaje.";
     console.error(error);
   } finally {
     if (token === loadToken) avatarSelect.disabled = false;
@@ -227,6 +267,12 @@ function animateRig(t) {
   }
   const idle = Math.sin(t * 0.65) * 0.012;
   const { nodes, rest, meshes } = rig;
+  if (currentHeadOnly && currentModel && !nodes.head) {
+    // The FaceCap sample has morph targets but no full humanoid skeleton.
+    currentModel.rotation.x = THREE.MathUtils.lerp(currentModel.rotation.x, state.pitch * 0.65, 0.12);
+    currentModel.rotation.y = THREE.MathUtils.lerp(currentModel.rotation.y, -state.yaw * 0.7, 0.12);
+    currentModel.rotation.z = THREE.MathUtils.lerp(currentModel.rotation.z, state.roll * 0.45, 0.12);
+  }
   applyBone(nodes.head, rest.head, state.pitch * 0.72 + idle, -state.yaw * 0.75, state.roll * 0.5);
   applyBone(nodes.neck, rest.neck, state.pitch * 0.22, -state.yaw * 0.22);
   if (nodes.jaw) {
@@ -244,6 +290,11 @@ function animateRig(t) {
       const index = keys.map((k) => dict[k]).find((v) => v !== undefined);
       if (index !== undefined) influences[index] = THREE.MathUtils.lerp(influences[index], value, 0.25);
     };
+    // Send the full MediaPipe face coefficients to matching ARKit targets.
+    // No fake eyelid overlay: geometry moves only when this asset supports it.
+    for (const [name, value] of Object.entries(state.expressions || {})) {
+      if (dict[name] !== undefined) set([name], value);
+    }
     set(["jawOpen", "mouthOpen"], state.jaw);
     set(["eyeBlinkLeft", "blink_left"], state.blinkLeft);
     set(["eyeBlinkRight", "blink_right"], state.blinkRight);
@@ -460,8 +511,22 @@ testBlink.addEventListener("click", () => {
   message.textContent = "Prueba manual de párpados: disponible solo con morph targets compatibles.";
 });
 avatarSelect.addEventListener("change", () => loadModel(avatarSelect.value));
+localAvatarInput.addEventListener("change", () => {
+  const file = localAvatarInput.files?.[0];
+  if (!file) return;
+  if (!/\.glb$/i.test(file.name) || file.size > 90 * 1024 * 1024) {
+    message.textContent = "Elegí un .glb de menos de 90 MB.";
+    localAvatarInput.value = "";
+    return;
+  }
+  if (customAvatarUrl) URL.revokeObjectURL(customAvatarUrl);
+  customAvatarUrl = URL.createObjectURL(file);
+  avatarSelect.value = "custom";
+  loadModel("custom");
+});
 $("lighting").addEventListener("change", (event) => setLighting(event.target.value));
 window.addEventListener("pagehide", () => {
   stopCamera();
   if (lastRecordingUrl) URL.revokeObjectURL(lastRecordingUrl);
+  if (customAvatarUrl) URL.revokeObjectURL(customAvatarUrl);
 });
