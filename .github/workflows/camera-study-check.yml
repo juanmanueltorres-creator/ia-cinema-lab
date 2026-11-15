@@ -1,0 +1,27 @@
+name: Camera study checks
+
+on:
+  pull_request:
+    paths:
+      - "experiments/privacy-puppet-webcam/**"
+      - ".github/workflows/camera-study-check.yml"
+  push:
+    branches:
+      - "experiment/privacy-puppet-webcam"
+    paths:
+      - "experiments/privacy-puppet-webcam/**"
+
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check browser module syntax
+        run: |
+          node --check experiments/privacy-puppet-webcam/app.js
+          node --check experiments/privacy-puppet-webcam/face-map.mjs
+      - name: Test face mapping
+        run: node --test experiments/privacy-puppet-webcam/face-map.test.mjs
