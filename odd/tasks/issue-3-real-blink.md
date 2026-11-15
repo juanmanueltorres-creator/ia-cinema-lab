@@ -1,4 +1,4 @@
-# Issue 3 — real eyelid blink
+# Issue 3 - real eyelid blink
 
 ## Objective and scope
 Deliver real blink input/output without replacing Liam, Kofi or Yuki, damaging mouth motion, recording, or local-only camera processing. Work only on `experiment/privacy-puppet-webcam`; no push or merge.
@@ -11,7 +11,7 @@ The pinned character GLBs contain demographic targets only. FaceCap has nonzero 
 - Route: delegated writer; mapping/preparation needs 4+ files and multiple non-trivial edits.
 - TDD: enabled by mandatory test-driven-development skill; no repository-specific mode found. Runner: `node --test experiments/privacy-puppet-webcam/face-map.test.mjs`.
 - RDD: on (default); parent owns native assessment/review after each work unit.
-- Delivery: ask-on-risk; forecast 250–380 authored lines for viewer fix and evidence. Asset generation is a separate bounded task if viable. No PR created.
+- Delivery: ask-on-risk; forecast 250-380 authored lines for viewer fix and evidence. Asset generation is a separate bounded task if viable. No PR created.
 - Engram mirror: pending (project recognition failed in parent session).
 
 ## Tasks
@@ -30,7 +30,7 @@ Viewer checks: alias/reset regression tests observed RED (5 pass, 2 fail) then G
 
 Runtime: Chromium headless, neutral/both/left/right/reopened states visually inspected for FaceCap and generated MPFB fixture; Liam manual jaw and unchanged appearance observed. Public CDN DNS failed in browser, so identical public dependency bytes were routed from temporary downloads. Only favicon404 remained. Screenshots in docs/evidence/issue-3 contain avatars only, no webcam. Reported render FPS is not a MediaPipe performance measurement.
 
-Next: native RDD assessment by parent, then real-camera acceptance and recovery of source MPFB characters. No camera/microphone enabled, no recording playback observed. Commit evidence pending initial work-unit commit.
+Next: native RDD assessment by parent, then real-camera acceptance and recovery of source MPFB characters. No camera/microphone enabled, no recording playback observed. Work-unit evidence: `5e4001dcc8b8ad39e8f3dcce0873ba632bcd899d` (T1-T3, 280 authored changed lines including this task document). Native RDD assessment pending parent; this is not an approval receipt. Blender overwrite-guard smoke check returned expected exit 1, preserving the shipped asset.
 
 ## Rollback
 Viewer unit can be reverted independently of original models: app.js, face-map.mjs, tests, index.html and README additions. No original model edits.
