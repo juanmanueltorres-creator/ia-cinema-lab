@@ -61,11 +61,21 @@
           <video id="camera" autoplay muted playsinline></video>
           <div id="cameraPlaceholder">Cámara desactivada</div>
         </div>
+        <div class="diagnostics" aria-label="Señales de captura facial">
+          <div><span>Mandíbula</span><strong id="jawMeter">—</strong></div>
+          <div><span>Parpadeo izquierdo</span><strong id="blinkLMeter">—</strong></div>
+          <div><span>Parpadeo derecho</span><strong id="blinkRMeter">—</strong></div>
+          <p id="rigSupport">Comprobando capacidades del avatar...</p>
+        </div>
         <div class="actions">
           <button id="start" class="primary">Activar cámara</button>
           <button id="stop" class="secondary" disabled>Detener</button>
         </div>
         <button id="calibrate" class="quiet" disabled>Calibrar mirando de frente</button>
+        <div class="manual-tests">
+          <button id="testJaw" class="quiet" disabled>Probar mandíbula sin cámara</button>
+          <button id="testBlink" class="quiet" disabled>Probar parpadeo</button>
+        </div>
         <div class="separator"></div>
         <p class="field">Capturar prueba</p>
         <button id="record" class="secondary wide" disabled>● Grabar escena</button>
