@@ -23,6 +23,15 @@ const startButton = $("start");
 const stopButton = $("stop");
 const calibrateButton = $("calibrate");
 const avatarSelect = $("avatar");
+const jawMeter = $("jawMeter");
+const blinkLMeter = $("blinkLMeter");
+const blinkRMeter = $("blinkRMeter");
+const rigSupport = $("rigSupport");
+const testJaw = $("testJaw");
+const testBlink = $("testBlink");
+let testJawUntil = 0;
+let testBlinkUntil = 0;
+
 
 let stream = null;
 let landmarker = null;
@@ -127,6 +136,35 @@ function getBones(object) {
   return { nodes, rest, meshes };
 }
 
+function hasMorphTargets(meshes, candidates) {
+  return meshes.some((mesh) => {
+    const d = mesh.morphTargetDictionary;
+    return d && candidates.some((name) => d[name] !== undefined);
+  });
+}
+
+function updateRigCapabilities() {
+  if (!rig) {
+    rigSupport.textContent = "El avatar todavía no está disponible.";
+    testJaw.disabled = true;
+    testBlink.disabled = true;
+    return;
+  }
+  const hasJaw = Boolean(rig.nodes.jaw) || hasMorphTargets(rig.meshes, ["jawOpen", "mouthOpen"]);
+  const hasBlink = hasMorphTargets(rig.meshes, ["eyeBlinkLeft", "blink_left"])
+    && hasMorphTargets(rig.meshes, ["eyeBlinkRight", "blink_right"]);
+  testJaw.disabled = !hasJaw;
+  testBlink.disabled = !hasBlink;
+  rigSupport.textContent = "Avatar: mandíbula " + (hasJaw ? "compatible" : "sin control")
+    + " · párpados " + (hasBlink ? "compatibles" : "SIN blendshapes de parpadeo");
+}
+
+function updateSignals(state) {
+  jawMeter.textContent = state ? Math.round(state.jaw * 100) + "%" : "—";
+  blinkLMeter.textContent = state ? Math.round(state.blinkLeft * 100) + "%" : "—";
+  blinkRMeter.textContent = state ? Math.round(state.blinkRight * 100) + "%" : "—";
+}
+
 const loader = new GLTFLoader();
 function loadGLB(url) {
   return new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
@@ -152,12 +190,14 @@ async function loadModel(name) {
     currentModel.position.set(0, config.y, 0);
     root.add(currentModel);
     rig = getBones(currentModel);
+    updateRigCapabilities();
     modelState.textContent = name.toUpperCase() + " · Modelo 3D cargado";
     message.textContent = "Listo. Activá la cámara para controlar la cabeza y la mandíbula.";
     recordButton.disabled = !stream;
   } catch (error) {
     if (token !== loadToken) return;
     rig = null;
+    updateRigCapabilities();
     modelState.textContent = "Error al cargar modelo";
     message.textContent = "No se pudo descargar el modelo. Probá otro personaje o revisá tu conexión.";
     console.error(error);
@@ -179,13 +219,18 @@ function applyBone(node, rest, x, y = 0, z = 0, factor = 0.17) {
 }
 function animateRig(t) {
   if (!rig) return;
-  const state = pose || { yaw: 0, pitch: 0, roll: 0, jaw: 0, blinkLeft: 0, blinkRight: 0, lookLeft: 0 };
+  const state = { yaw: 0, pitch: 0, roll: 0, jaw: 0, blinkLeft: 0, blinkRight: 0, lookLeft: 0, ...pose };
+  if (performance.now() < testJawUntil) state.jaw = 1;
+  if (performance.now() < testBlinkUntil) {
+    state.blinkLeft = 1;
+    state.blinkRight = 1;
+  }
   const idle = Math.sin(t * 0.65) * 0.012;
   const { nodes, rest, meshes } = rig;
   applyBone(nodes.head, rest.head, state.pitch * 0.72 + idle, -state.yaw * 0.75, state.roll * 0.5);
   applyBone(nodes.neck, rest.neck, state.pitch * 0.22, -state.yaw * 0.22);
   if (nodes.jaw) {
-    qRot.setFromAxisAngle(xAxis, clamp(state.jaw, 0, 1) * 0.25);
+    qRot.setFromAxisAngle(xAxis, clamp(state.jaw * 1.5, 0, 1) * 0.45);
     qTarget.copy(rest.jaw).multiply(qRot);
     nodes.jaw.quaternion.slerp(qTarget, 0.2);
   }
@@ -240,9 +285,11 @@ function processCamera() {
       if (next) {
         neutral = next.neutral;
         pose = next;
+        updateSignals(next);
         presence("Rostro detectado · siguiendo expresión", true);
       } else {
         pose = null;
+        updateSignals(null);
         presence("Cámara activa · no se detecta rostro", false);
       }
     } catch (error) {
@@ -318,6 +365,7 @@ function stopCamera() {
   landmarker = null; stream = null;
   video.pause(); video.srcObject = null;
   neutral = null; pose = null; lastPresence = "";
+  updateSignals(null);
   $("cameraPlaceholder").hidden = false;
   stopButton.disabled = true;
   calibrateButton.disabled = true;
@@ -403,6 +451,14 @@ calibrateButton.addEventListener("click", () => {
   message.textContent = "Calibración reiniciada. Mirá de frente a la cámara.";
 });
 recordButton.addEventListener("click", toggleRecording);
+testJaw.addEventListener("click", () => {
+  testJawUntil = performance.now() + 1800;
+  message.textContent = "Prueba manual: la mandíbula debería abrirse sin depender de la webcam.";
+});
+testBlink.addEventListener("click", () => {
+  testBlinkUntil = performance.now() + 900;
+  message.textContent = "Prueba manual de párpados: disponible solo con morph targets compatibles.";
+});
 avatarSelect.addEventListener("change", () => loadModel(avatarSelect.value));
 $("lighting").addEventListener("change", (event) => setLighting(event.target.value));
 window.addEventListener("pagehide", () => {
