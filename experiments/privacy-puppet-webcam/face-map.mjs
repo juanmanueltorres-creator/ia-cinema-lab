@@ -27,6 +27,8 @@ export function mapFace(result, neutral = null) {
     blinkLeft: clamp(score.eyeBlinkLeft ?? 0, 0, 1),
     blinkRight: clamp(score.eyeBlinkRight ?? 0, 0, 1),
     lookLeft: clamp((score.eyeLookOutLeft ?? 0) - (score.eyeLookInLeft ?? 0), -1, 1),
+    // ARKit coefficients can drive matching morph targets on properly rigged GLBs.
+    expressions: Object.fromEntries(Object.entries(score).map(([name, value]) => [name, clamp(value, 0, 1)])),
     detected: true,
   };
 }
