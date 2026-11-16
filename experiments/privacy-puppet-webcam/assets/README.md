@@ -81,10 +81,12 @@ Con Blender 5.2+ y desde la raíz del repositorio:
 & 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-actor-mouth.py -- --input experiments/privacy-puppet-webcam/assets/mpfb-actor.glb --output experiments/privacy-puppet-webcam/assets/mpfb-actor-mouth.glb
 ```
 
-El generador exige otro archivo de salida que todavía no exista; nunca reemplaza el actor base ni un resultado anterior. El modelo nuevo excluye la esfera auxiliar sobredimensionada presente en el GLB de entrada, que de otro modo altera el encuadre. Tamaño: **2,849,196 bytes**. SHA-256: `eec96f6c69070db0c35ad78e2f8ba178f030e791172005499964e3ba6d679dd1`.
+El generador exige otro archivo de salida que todavía no exista; nunca reemplaza el actor base ni un resultado anterior. El modelo nuevo excluye la esfera auxiliar sobredimensionada presente en el GLB de entrada, que de otro modo altera el encuadre. Tamaño: **2,849,200 bytes**. SHA-256: `618873198684da0b8570b0036e84d92bee9d8c10500e4e2c6da60b3a539c4f67`.
 
 ### Evidencia visual sintética
 
 Las capturas se generaron en Chromium con el GLB real, sin webcam ni micrófono, aplicando canales morph directamente. [0% original](../../../docs/evidence/issue-4-mouth/before-0.png) · [100% original](../../../docs/evidence/issue-4-mouth/before-100.png) · [0% nuevo](../../../docs/evidence/issue-4-mouth/after-0.png) · [25%](../../../docs/evidence/issue-4-mouth/after-25.png) · [50%](../../../docs/evidence/issue-4-mouth/after-50.png) · [100% nuevo](../../../docs/evidence/issue-4-mouth/after-100.png) · [sonrisa](../../../docs/evidence/issue-4-mouth/after-smile.png) · [blink + mandíbula](../../../docs/evidence/issue-4-mouth/after-blink-jaw.png) · [cabeza girada + mandíbula](../../../docs/evidence/issue-4-mouth/after-rotated-jaw.png) · [neutral nuevo](../../../docs/evidence/issue-4-mouth/after-neutral-restored.png).
 
 El arnés de captura local es [`geometry-qa.html`](../../../docs/evidence/issue-4-mouth/geometry-qa.html); replica encuadre/luces del visor y recibe `actor`, `jaw`, `smile`, `blink`, `pitch`, `yaw` y `roll` por query string. No inicia el pipeline de cámara.
+
+La carpeta del proyecto contiene además un WebM sintético y silencioso de una validación anterior del pipeline (`docs/evidence/issue-4/actor-synthetic-silent.webm`), no una grabación de cámara/micrófono con este actor. El usuario informó que probó cámara y grabación; no hay archivo real aportado en el workspace para verificarlo independientemente. Por eso la evidencia adjunta confirma geometría y selección del actor, no aceptación audiovisual del nuevo asset.
