@@ -123,16 +123,16 @@ def dental_arch(z):
     for index, x in enumerate(x_positions):
         side_distance = abs(x) / 0.027
         y = -0.122 + 0.012 * side_distance ** 2
-        width = 0.0045 if index in (0, 11) else 0.0052
-        height = 0.008 if index in (0, 11) else 0.009
-        depth = 0.0045
+        width = 0.0017 if index in (0, 11) else 0.0018
+        height = 0.0047 if index in (0, 11) else 0.0048
+        depth = 0.0038
         parts.append(ellipsoid((x, y, z), (width, depth, height), 7, 10))
     return merge(parts)
 
 
-upper_vertices, upper_faces = dental_arch(1.317)
+upper_vertices, upper_faces = dental_arch(1.3225)
 make_mesh('Upper dentition', upper_vertices, upper_faces, tooth_material)
-lower_vertices, lower_faces = dental_arch(1.305)
+lower_vertices, lower_faces = dental_arch(1.3120)
 make_mesh('Lower dentition', lower_vertices, lower_faces, tooth_material, jaw_morph=True)
 tongue_vertices, tongue_faces = ellipsoid((0, -0.102, 1.290), (0.014, 0.024, 0.004), 9, 18)
 make_mesh('Tongue', tongue_vertices, tongue_faces, tongue_material, jaw_morph=True)
