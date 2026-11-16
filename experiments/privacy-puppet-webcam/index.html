@@ -71,6 +71,11 @@
           <div><span>Mandíbula</span><strong id="jawMeter">—</strong></div>
           <div><span>Parpadeo izquierdo</span><strong id="blinkLMeter">—</strong></div>
           <div><span>Parpadeo derecho</span><strong id="blinkRMeter">—</strong></div>
+          <label class="blink-calibration" for="blinkCloseAt">
+            Cierre completo del párpado con señal de <strong id="blinkCloseValue">50%</strong>
+          </label>
+          <input id="blinkCloseAt" type="range" min="35" max="90" step="5" value="50" aria-label="Sensibilidad del cierre de párpados" />
+          <small class="blink-hint">Si cerrás los ojos y quedan entreabiertos, bajá este valor. Los porcentajes anteriores muestran la señal original.</small>
           <p id="rigSupport">Comprobando capacidades del avatar...</p>
           <details><summary>Canales exactos del GLB (sin datos faciales)</summary><pre id="rigChannels" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:12rem;overflow:auto"></pre></details>
         </div>
