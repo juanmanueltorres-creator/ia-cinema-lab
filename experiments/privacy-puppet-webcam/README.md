@@ -70,3 +70,11 @@ Prueba sin cámara: seleccionar FaceCap o la cabeza MPFB, pulsar **Probar parpad
 Verificación local: `node --check app.js`, `node --check face-map.mjs` y `node --test face-map.test.mjs`: 7/7 pruebas. Los dos tests nuevos fallaron antes del arreglo y pasaron después. Navegador Chromium headless en Windows: carga de Liam, mandíbula manual visible y cierre bilateral/independiente/reapertura de FaceCap y MPFB observados. El navegador no resolvía el CDN: la prueba enrutó las mismas dependencias públicas descargadas a temporales; no demuestra disponibilidad del CDN. Único 404 restante: favicon.
 
 **Pendiente de aceptación:** webcam real (ambos ojos e independientes), cara neutra al perder detección en vivo, boca/dientes/lengua durante habla y reproducción de una grabación audiovisual; Chrome/Firefox interactivos y FPS con MediaPipe. No se activó cámara ni micrófono en la automatización. La captura y el grabador existentes no se modificaron; esto no equivale a haber validado la grabación completa.
+
+## Ajuste experimental de sensibilidad de párpados (rescate Issue #4)
+
+El valor que informa MediaPipe en la interfaz sigue siendo **crudo**: algunos cierres completos registran solo 45–55 %. El control **Cierre completo del párpado con señal de** transforma ese nivel en un morph target de cierre completo. Valor inicial: **50 %**, ajustable entre **35 y 90 %**. Si el avatar cierra demasiado fácil con ojos abiertos, **subí** el valor. Si queda entreabierto con ojos realmente cerrados, **bajalo**.
+
+La transformación usa curva suave con zona neutra 8 %. La velocidad de cierre del morph es mayor que la de apertura, para capturar parpadeos de poca duración sin cambiar mandíbula, sonrisa, cejas ni grabación. Esto solo afecta avatares que realmente tienen shape keys de párpados: FaceCap, MPFB de prueba o GLB propios compatibles. **No agrega párpados a Liam, Kofi y Yuki.**
+
+Validación pendiente: webcam real, falso positivo al mirar hacia abajo, sincronización izquierda/derecha y grabación audiovisual. El nuevo actor completo del Issue #4 no se generó todavía: el script de Blender y su prueba quedaron rescatados pero el archivo `assets/mpfb-actor.glb` no existe en esta rama. No incluir `actor.test.mjs` en el CI hasta producir y revisar ese archivo.
