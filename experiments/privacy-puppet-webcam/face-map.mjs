@@ -69,9 +69,10 @@ export function applyExpressions(dictionary, influences, state, factor = 0.25) {
     const value = clamp(override[name] ?? state?.expressions?.[name] ?? 0, 0, 1);
     // Fast eyelid closure captures short real blinks; softer release avoids snapping.
     // Other facial channels (jaw, brow, smile) keep their original smoothing.
-    const speed = name === "eyeBlinkLeft" || name === "eyeBlinkRight"
-      ? (value > influences[index] ? 0.82 : 0.42)
-      : factor;
+    const speed = factor >= 1 ? 1
+      : name === "eyeBlinkLeft" || name === "eyeBlinkRight"
+        ? (value > influences[index] ? 0.82 : 0.42)
+        : factor;
     influences[index] += (value - influences[index]) * speed;
   }
 }
