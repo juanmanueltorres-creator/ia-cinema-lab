@@ -66,3 +66,25 @@ The actor test failed before the binary existed; the full suite now passes 10/10
 Chromium headless: independent left/right, both, jaw, brow raise, head rotation and neutral reset were inspected using **synthetic coefficients**, not webcam inference. Avatar-only evidence is in `docs/evidence/issue-4/`. The existing recorder produced a ten-second **synthetic silent** local WebM; playback decoded at 823×584, 54 frames by 2.21 seconds. Render sampling reached 100 FPS without MediaPipe: this is not a live tracking/latency benchmark. Public CDN bytes were routed from unchanged local caches for the test; no personal media was captured or uploaded.
 
 Real-camera acceptance of this **new** actor remains pending: bilateral synchronization, calibration, natural speech, microphone synchronization and Chrome/Firefox performance. Earlier user validation of the existing pipeline is not certification of this asset.
+
+## Actor con anatomía bucal experimental (Issue #4)
+
+El selector incluye **MPFB Actor · anatomía bucal experimental**, como GLB independiente de `mpfb-actor.glb`. Añade una cavidad oral oscura, dentición superior e inferior simplificada y una lengua procedimental. La mandíbula inferior y la lengua siguen el canal `jawOpen`; cavidad y arco superior siguen el hueso `head`. Los pesos iniciales de todos los morph targets son neutrales.
+
+No cambia el mapeo MediaPipe, el blink/calibración ni el grabador. Es evidencia de geometría del prototipo, no un sistema de visemas ni una validación de cámara/micrófono. La geometría dental, lengua y cavidad son originales y procedimentales; no se importan assets de terceros. El actor base continúa bajo las fuentes/licencias indicadas en la sección anterior.
+
+### Regenerar sin sobrescribir
+
+Con Blender 5.2+ y desde la raíz del repositorio:
+
+```powershell
+& 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-actor-mouth.py -- --input experiments/privacy-puppet-webcam/assets/mpfb-actor.glb --output experiments/privacy-puppet-webcam/assets/mpfb-actor-mouth.glb
+```
+
+El generador exige otro archivo de salida que todavía no exista; nunca reemplaza el actor base ni un resultado anterior. El modelo nuevo excluye la esfera auxiliar sobredimensionada presente en el GLB de entrada, que de otro modo altera el encuadre. Tamaño: **2,849,196 bytes**. SHA-256: `eec96f6c69070db0c35ad78e2f8ba178f030e791172005499964e3ba6d679dd1`.
+
+### Evidencia visual sintética
+
+Las capturas se generaron en Chromium con el GLB real, sin webcam ni micrófono, aplicando canales morph directamente. [0% original](../../../docs/evidence/issue-4-mouth/before-0.png) · [100% original](../../../docs/evidence/issue-4-mouth/before-100.png) · [0% nuevo](../../../docs/evidence/issue-4-mouth/after-0.png) · [25%](../../../docs/evidence/issue-4-mouth/after-25.png) · [50%](../../../docs/evidence/issue-4-mouth/after-50.png) · [100% nuevo](../../../docs/evidence/issue-4-mouth/after-100.png) · [sonrisa](../../../docs/evidence/issue-4-mouth/after-smile.png) · [blink + mandíbula](../../../docs/evidence/issue-4-mouth/after-blink-jaw.png) · [cabeza girada + mandíbula](../../../docs/evidence/issue-4-mouth/after-rotated-jaw.png) · [neutral nuevo](../../../docs/evidence/issue-4-mouth/after-neutral-restored.png).
+
+El arnés de captura local es [`geometry-qa.html`](../../../docs/evidence/issue-4-mouth/geometry-qa.html); replica encuadre/luces del visor y recibe `actor`, `jaw`, `smile`, `blink`, `pitch`, `yaw` y `roll` por query string. No inicia el pipeline de cámara.

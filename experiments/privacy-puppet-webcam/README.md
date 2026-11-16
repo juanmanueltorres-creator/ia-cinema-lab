@@ -80,3 +80,13 @@ El valor que informa MediaPipe en la interfaz sigue siendo **crudo**: algunos ci
 La transformación usa curva suave con zona neutra 8 %. La velocidad de cierre del morph es mayor que la de apertura, para capturar parpadeos de poca duración sin cambiar mandíbula, sonrisa, cejas ni grabación. Esto solo afecta avatares que realmente tienen shape keys de párpados: FaceCap, MPFB de prueba o GLB propios compatibles. **No agrega párpados a Liam, Kofi y Yuki.**
 
 Validación pendiente: webcam real, falso positivo al mirar hacia abajo, sincronización izquierda/derecha y grabación audiovisual. El actor completo se generó y está disponible como `assets/mpfb-actor.glb`; `actor.test.mjs` ya se ejecuta en CI. La nueva geometría todavía requiere aceptación con webcam real, aunque el usuario validó previamente el seguimiento y grabador existentes.
+
+## Anatomía bucal incremental (Issue #4)
+
+**MPFB Actor · anatomía bucal experimental** es una opción separada que conserva el GLB completo anterior. Compara la geometría en [mandíbula cerrada original](../../docs/evidence/issue-4-mouth/before-0.png), [abierta original](../../docs/evidence/issue-4-mouth/before-100.png), [abierta con anatomía nueva](../../docs/evidence/issue-4-mouth/after-100.png), [sonrisa](../../docs/evidence/issue-4-mouth/after-smile.png) y [neutral nuevo](../../docs/evidence/issue-4-mouth/after-neutral-restored.png).
+
+La nueva exportación incluye una cavidad oral oscura, dentición superior fija al hueso de la cabeza, dentición inferior y lengua con `jawOpen`, y pesos morph neutrales. La geometría es procedimental; no se agregaron assets dentales externos. Es un paso visual de prototipo: no agrega visemas, fonemas o sincronización de habla, y no valida la cámara real ni el micrófono. MediaPipe, la calibración de parpadeo, el permiso de dispositivos y el grabador permanecen sin cambios.
+
+Pruebas automatizadas del asset: `node --test experiments/privacy-puppet-webcam/*.test.mjs`. La reproducción Blender y las licencias del actor están en [`assets/README.md`](assets/README.md#actor-con-anatomía-bucal-experimental).
+
+Capturas de la integración actual (cámara apagada): [reposo](../../docs/evidence/issue-4-mouth/app-neutral.png), [mandíbula abierta](../../docs/evidence/issue-4-mouth/app-jaw-100.png) y [reposo restaurado tras la prueba](../../docs/evidence/issue-4-mouth/app-neutral-restored.png).

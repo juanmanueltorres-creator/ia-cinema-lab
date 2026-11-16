@@ -13,6 +13,7 @@ const AVATARS = {
   kofi: { file: "kofi-v2.glb", y: -1.45 },
   mpfbtest: { url: "./assets/mpfb-blink-test.glb", autoFit: true, uncompressed: true },
   mpfbactor: { url: "./assets/mpfb-actor.glb", fitBody: true, y: -1.45 },
+  mpfbactormouth: { url: "./assets/mpfb-actor-mouth.glb", fitBody: true, y: -1.45 },
   // Scan-style head with 52 ARKit shapes: visual test of real eyelid movement.
   // Source: Three.js examples, model supplied by Face Cap. No local redistribution.
   facecap: {

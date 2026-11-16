@@ -1,0 +1,27 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Actor mouth geometry QA</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#141d29}canvas{display:block;width:100%;height:100%}#status{position:fixed;top:10px;left:10px;color:#fff;font:12px sans-serif}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"}}</script>
+</head>
+<body><div id="status">Loading actor…</div><canvas id="stage"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const canvas=document.querySelector('#stage');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.24;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#141d29');scene.add(new THREE.AmbientLight(0xbcd3e7,1.45));
+const key=new THREE.DirectionalLight(0xffe6cf,2.1);key.position.set(2,3,4);const fill=new THREE.DirectionalLight(0x94beff,1.2);fill.position.set(-3,1,-1);scene.add(key,fill);
+const camera=new THREE.PerspectiveCamera(40,1,.01,100);camera.position.set(0,0,.82);camera.lookAt(0,0,0);const root=new THREE.Group();root.position.y=-.1;scene.add(root);
+const resize=()=>{renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()};addEventListener('resize',resize);resize();
+const params=new URLSearchParams(location.search);const file=params.get('actor')||'mpfb-actor.glb';
+const gltf=await new GLTFLoader().loadAsync(`../../../experiments/privacy-puppet-webcam/assets/${file}`);const model=gltf.scene;
+const bounds=new THREE.Box3().setFromObject(model);const scale=1.75/bounds.getSize(new THREE.Vector3()).y;model.scale.setScalar(scale);model.position.set(0,-1.45-bounds.min.y*scale,0);root.add(model);
+const targets={};if(params.has('jaw'))targets.jawOpen=Number(params.get('jaw'));if(params.has('smile'))targets.mouthSmileLeft=targets.mouthSmileRight=Number(params.get('smile'));if(params.has('blink'))targets.eyeBlinkLeft=targets.eyeBlinkRight=Number(params.get('blink'));
+let head;model.traverse(node=>{if(node.isBone&&node.name.toLowerCase()==='head')head=node;if(['Cube','Icosphere','Icosphere.001'].includes(node.name))node.visible=false;const dict=node.morphTargetDictionary,weights=node.morphTargetInfluences;if(!dict||!weights)return;weights.fill(0);for(const [name,value] of Object.entries(targets))if(dict[name]!==undefined)weights[dict[name]]=value});
+if(head){const delta=new THREE.Quaternion().setFromEuler(new THREE.Euler(Number(params.get('pitch')||0),Number(params.get('yaw')||0),Number(params.get('roll')||0),'XYZ'));head.quaternion.multiply(delta)}
+renderer.render(scene,camera);document.querySelector('#status').textContent=`${file} · jaw ${params.get('jaw')||'0'} · geometry-only synthetic expression review`;
+</script></body></html>
