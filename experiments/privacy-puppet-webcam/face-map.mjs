@@ -33,6 +33,15 @@ export function mapFace(result, neutral = null) {
   };
 }
 
+// Retarget partial MediaPipe eye-closure scores to full eyelid movement.
+// Keep these scores separate from the raw diagnostic percentages.
+// A webcam may score fully closed eyelids below 1.0.
+export function blinkWeight(raw, { neutral = 0.08, full = 0.50 } = {}) {
+  const span = Math.max(0.05, full - neutral);
+  const progress = clamp((clamp(raw, 0, 1) - neutral) / span, 0, 1);
+  return progress * progress * (3 - 2 * progress);
+}
+
 // Rig-specific jaw retargeting: ignore small resting-mouth noise and
 // cap the angle to avoid an exaggerated "hinged jaw" effect.
 export function jawAngle(score, { deadzone = 0.12, maxScore = 0.85, maxRadians = 0.30 } = {}) {
@@ -58,6 +67,11 @@ export function applyExpressions(dictionary, influences, state, factor = 0.25) {
     if (!name) continue;
     const override = { jawOpen: state?.jaw, eyeBlinkLeft: state?.blinkLeft, eyeBlinkRight: state?.blinkRight };
     const value = clamp(override[name] ?? state?.expressions?.[name] ?? 0, 0, 1);
-    influences[index] += (value - influences[index]) * factor;
+    // Fast eyelid closure captures short real blinks; softer release avoids snapping.
+    // Other facial channels (jaw, brow, smile) keep their original smoothing.
+    const speed = name === "eyeBlinkLeft" || name === "eyeBlinkRight"
+      ? (value > influences[index] ? 0.82 : 0.42)
+      : factor;
+    influences[index] += (value - influences[index]) * speed;
   }
 }
