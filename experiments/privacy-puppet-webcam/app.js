@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/+esm";
-import { mapFace, clamp, jawAngle, expressionName, applyExpressions } from "./face-map.mjs";
+import { mapFace, clamp, jawAngle, blinkWeight, expressionName, applyExpressions } from "./face-map.mjs";
 
 // Isolated technical spike: no backend, no face uploads, no paid APIs.
 // Upstream sample models: PrivacyPuppet (MIT repository; see README and asset caveats).
@@ -34,6 +34,8 @@ const localAvatarInput = $("localAvatar");
 const jawMeter = $("jawMeter");
 const blinkLMeter = $("blinkLMeter");
 const blinkRMeter = $("blinkRMeter");
+const blinkCloseAt = $("blinkCloseAt");
+const blinkCloseValue = $("blinkCloseValue");
 const rigSupport = $("rigSupport");
 const testJaw = $("testJaw");
 let testJawUntil = 0;
@@ -286,6 +288,13 @@ function applyBone(node, rest, x, y = 0, z = 0, factor = 0.17) {
 function animateRig(t) {
   if (!rig) return;
   const state = { yaw: 0, pitch: 0, roll: 0, jaw: 0, blinkLeft: 0, blinkRight: 0, lookLeft: 0, ...pose };
+  // Some cameras report only ~0.45–0.55 for fully closed eyes.
+  // Retarget to a full eyelid morph without changing raw diagnostic values.
+  if (pose) {
+    const full = Number(blinkCloseAt.value) / 100;
+    state.blinkLeft = blinkWeight(state.blinkLeft, { full });
+    state.blinkRight = blinkWeight(state.blinkRight, { full });
+  }
   if (!stream && !pose) {
     // Procedural idle blinking, like the upstream demo, only visible on rigged eyes.
     const phase = (t + 0.7) % 4.3;
@@ -533,6 +542,9 @@ document.querySelectorAll("[data-blink]").forEach((button) => button.addEventLis
   testBlinkUntil = performance.now() + 900;
   message.textContent = "Prueba manual 0 → 1 → 0; después vuelve al seguimiento o reposo.";
 }));
+blinkCloseAt.addEventListener("input", () => {
+  blinkCloseValue.textContent = blinkCloseAt.value + "%";
+});
 avatarSelect.addEventListener("change", () => loadModel(avatarSelect.value));
 localAvatarInput.addEventListener("change", () => {
   const file = localAvatarInput.files?.[0];
