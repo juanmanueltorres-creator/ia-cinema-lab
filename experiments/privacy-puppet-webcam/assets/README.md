@@ -26,3 +26,43 @@ $source = 'https://raw.githubusercontent.com/makehumancommunity/extra-targets/7e
 ```
 
 The exporter refuses an existing output, missing targets, or empty eyelid deltas. It runs in a fresh headless process, never opens/saves a `.blend`, and never targets an imported GLB. Open the generated output with **Mi GLB** to compare it before intentionally replacing this fixture.
+
+## Complete experimental actor (Issue #4 rescue)
+
+`mpfb-actor.glb` is a **new MPFB character, not Liam**, with a complete body, fitted navy/charcoal garments, short scalp crop, anatomical textured eyes and a default MPFB skeleton. The selector frames its head/neck/upper torso. Ten real `faceunits01` targets drive independent eyelids, jaw, brows and smiles. The existing MediaPipe mapping and eyelid calibration are unchanged. The jaw bone is named `mandible_reference` deliberately: the skin uses `jawOpen`, avoiding double deformation by the viewer's legacy jaw-bone driver.
+
+This is a functional prototype, **not a production-realistic actor**: flat skin/lip materials, simple fitted shell clothing and scalp hair; no separate teeth, tongue, eyelashes or eyebrow hair. Brow skin deforms but has no hair texture. Speech/visemes, extreme poses and shoulder/collar transitions need art review. No existing avatar or MPFBTEST was modified.
+
+### Provenance
+
+- Base body, default rig/weights: installed MPFB2 2.0.18, base OBJ has an explicit CC0 header. Garments/hair are original derived geometry; constant materials are script-authored.
+- Ten expression targets: `makehumancommunity/extra-targets`, pinned `7eaba3453134385bb5ea9811ef0b33b85b4b556d`, CC0 (license linked above).
+- High-poly eyes and `brown_eye.png`: MakeHuman core assets, from `makehumancommunity/googlecode` commit `0d0cfec918f8507ad98adb170beea2992f5bafac`, under `makehuman/data/eyes/`. OBJ/MHCLO headers identify the authors; the [official core asset license is CC0](https://static.makehumancommunity.org/about/license.html). MPFB imports the fitting but its atlas UV layout is not suitable for the standalone eye image: this exporter reprojects each globe's UVs, not its anatomy.
+- Blender executable verified: 5.2.2 LTS. Export may warn that four highest bone influences are retained/normalized; no animation or paid external service is used.
+
+### Rebuild without overwriting the shipped actor
+
+Run from repository root in PowerShell, with the MPFB2 extension installed:
+
+```powershell
+$sources = Join-Path $env:TEMP 'ia-cinema-actor-sources'
+New-Item -ItemType Directory -Force $sources | Out-Null
+$targets = 'https://raw.githubusercontent.com/makehumancommunity/extra-targets/7eaba3453134385bb5ea9811ef0b33b85b4b556d/assets/faceunits01/targets/faceunits'
+'eyeBlinkLeft','eyeBlinkRight','jawOpen','browDownLeft','browDownRight','browInnerUp','browOuterUpLeft','browOuterUpRight','mouthSmileLeft','mouthSmileRight' | ForEach-Object {
+  Invoke-WebRequest "$targets/$_.target" -OutFile (Join-Path $sources "$_.target")
+}
+$eyes = 'https://raw.githubusercontent.com/makehumancommunity/googlecode/0d0cfec918f8507ad98adb170beea2992f5bafac/makehuman/data/eyes'
+'high-poly.obj','high-poly.mhclo' | ForEach-Object { Invoke-WebRequest "$eyes/high-poly/$_" -OutFile (Join-Path $sources $_) }
+Invoke-WebRequest "$eyes/materials/brown_eye.png" -OutFile (Join-Path $sources 'brown_eye.png')
+& 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-complete-actor.py -- --sources $sources --output (Join-Path $sources 'actor-review.glb')
+```
+
+The missing original MHCLO material path warning is expected: the script supplies the verified eye texture/material explicitly. Existing output files are refused. Review `actor-review.glb` through **Mi GLB** before replacing any output intentionally.
+
+### Observed verification
+
+The actor test failed before the binary existed; the full suite now passes 10/10. Export logs show 718 vertices moved per eyelid and 2,249 for jaw opening. The generator retains original MPFB indexing until the final body extraction, so targets are never transferred to incompatible Liam topology.
+
+Chromium headless: independent left/right, both, jaw, brow raise, head rotation and neutral reset were inspected using **synthetic coefficients**, not webcam inference. Avatar-only evidence is in `docs/evidence/issue-4/`. The existing recorder produced a ten-second **synthetic silent** local WebM; playback decoded at 823×584, 54 frames by 2.21 seconds. Render sampling reached 100 FPS without MediaPipe: this is not a live tracking/latency benchmark. Public CDN bytes were routed from unchanged local caches for the test; no personal media was captured or uploaded.
+
+Real-camera acceptance of this **new** actor remains pending: bilateral synchronization, calibration, natural speech, microphone synchronization and Chrome/Firefox performance. Earlier user validation of the existing pipeline is not certification of this asset.

@@ -12,6 +12,7 @@ const AVATARS = {
   yuki: { file: "yuki-v2.glb", y: -1.15 },
   kofi: { file: "kofi-v2.glb", y: -1.45 },
   mpfbtest: { url: "./assets/mpfb-blink-test.glb", autoFit: true, uncompressed: true },
+  mpfbactor: { url: "./assets/mpfb-actor.glb", fitBody: true, y: -1.45 },
   // Scan-style head with 52 ARKit shapes: visual test of real eyelid movement.
   // Source: Three.js examples, model supplied by Face Cap. No local redistribution.
   facecap: {
@@ -247,6 +248,11 @@ async function loadModel(name) {
       const scale = 0.44 / size.y;
       model.scale.setScalar(scale);
       model.position.set(-center.x * scale, -center.y * scale + 0.10, -center.z * scale);
+    } else if (config.fitBody) {
+      const bounds = new THREE.Box3().setFromObject(model);
+      const scale = 1.75 / bounds.getSize(new THREE.Vector3()).y;
+      model.scale.setScalar(scale);
+      model.position.set(0, config.y - bounds.min.y * scale, 0);
     } else {
       model.position.set(0, config.y, 0);
     }

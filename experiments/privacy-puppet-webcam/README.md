@@ -1,5 +1,7 @@
 # Experimento · Camera → Human Puppet
 
+**Issue #4 — nuevo actor disponible:** ejecutar el servidor indicado abajo y elegir **MPFB Actor · personaje experimental completo**. Incluye cuerpo/ropa, ojos texturizados y diez expresiones faciales; conserva los otros personajes. Es un prototipo funcional con materiales sencillos, no un acabado audiovisual final. [Generación, licencias y límites](assets/README.md#complete-experimental-actor-issue-4-rescue). Pruebas actuales: `node --test experiments/privacy-puppet-webcam/*.test.mjs` desde la raíz.
+
 Prueba web independiente para validar **PrivacyPuppet + MediaPipe**, antes de integrarlos en React. No reemplaza el MVP ni representa una demo aprobada.
 
 ## Ejecutar
@@ -77,4 +79,4 @@ El valor que informa MediaPipe en la interfaz sigue siendo **crudo**: algunos ci
 
 La transformación usa curva suave con zona neutra 8 %. La velocidad de cierre del morph es mayor que la de apertura, para capturar parpadeos de poca duración sin cambiar mandíbula, sonrisa, cejas ni grabación. Esto solo afecta avatares que realmente tienen shape keys de párpados: FaceCap, MPFB de prueba o GLB propios compatibles. **No agrega párpados a Liam, Kofi y Yuki.**
 
-Validación pendiente: webcam real, falso positivo al mirar hacia abajo, sincronización izquierda/derecha y grabación audiovisual. El nuevo actor completo del Issue #4 no se generó todavía: el script de Blender y su prueba quedaron rescatados pero el archivo `assets/mpfb-actor.glb` no existe en esta rama. No incluir `actor.test.mjs` en el CI hasta producir y revisar ese archivo.
+Validación pendiente: webcam real, falso positivo al mirar hacia abajo, sincronización izquierda/derecha y grabación audiovisual. El actor completo se generó y está disponible como `assets/mpfb-actor.glb`; `actor.test.mjs` ya se ejecuta en CI. La nueva geometría todavía requiere aceptación con webcam real, aunque el usuario validó previamente el seguimiento y grabador existentes.
