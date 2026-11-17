@@ -51,3 +51,47 @@ test("ARKit targets preserve sensor values for eyelid and mouth morphs", () => {
   assert.equal(pose.expressions.eyeBlinkRight, 0.2);
   assert.equal(pose.expressions.missing, undefined);
 });
+
+test("expression aliases resolve FaceCap and MPFB eyelids without touching demographic shapes", async () => {
+  const { expressionName } = await import("./face-map.mjs");
+  assert.equal(typeof expressionName, "function");
+  assert.equal(expressionName("eyeBlink_L"), "eyeBlinkLeft");
+  assert.equal(expressionName("eyeBlink_R"), "eyeBlinkRight");
+  assert.equal(expressionName("!ex-eyeBlinkLeft"), "eyeBlinkLeft");
+  assert.equal(expressionName("!ex-eyeBlinkRight"), "eyeBlinkRight");
+  assert.equal(expressionName("blink_left"), "eyeBlinkLeft");
+  assert.equal(expressionName("$md-age"), null);
+});
+
+test("expression application resets owned channels on face loss, preserving model shapes", async () => {
+  const { applyExpressions } = await import("./face-map.mjs");
+  assert.equal(typeof applyExpressions, "function");
+  const dict = { "!ex-eyeBlinkLeft": 0, eyeBlink_R: 1, jawOpen: 2, mouthSmileLeft: 3, "$md-age": 4 };
+  const values = [0, 0, 0, 0, 0.7];
+  applyExpressions(dict, values, { jaw: 0.4, blinkLeft: 1, blinkRight: 0.2, expressions: { mouthSmileLeft: 0.8 } }, 1);
+  assert.deepEqual(values, [1, 0.2, 0.4, 0.8, 0.7]);
+  applyExpressions(dict, values, null, 1);
+  assert.deepEqual(values, [0, 0, 0, 0, 0.7]);
+});
+
+test("blink sensitivity reaches full closure for underreported camera scores", async () => {
+  const { blinkWeight } = await import("./face-map.mjs");
+  assert.equal(blinkWeight(0), 0);
+  assert.equal(blinkWeight(0.08), 0);
+  assert.ok(blinkWeight(0.47) > 0.98, "47% from camera should close eyelid");
+  assert.equal(blinkWeight(0.50), 1);
+  assert.equal(blinkWeight(1), 1);
+  assert.equal(blinkWeight(0.47, { full: 0.9 }) < 0.6, true);
+  assert.ok(blinkWeight(0.22) < blinkWeight(0.40));
+});
+
+test("eyelid morphs close faster than face channels and reopen smoothly", async () => {
+  const { applyExpressions } = await import("./face-map.mjs");
+  const dict = { "eyeBlink_L": 0, "!ex-eyeBlinkRight": 1, mouthSmileLeft: 2 };
+  const values = [0, 0, 0];
+  applyExpressions(dict, values, { blinkLeft: 1, blinkRight: 1, expressions: { mouthSmileLeft: 1 } });
+  assert.ok(values[0] > 0.8 && values[1] > 0.8);
+  assert.equal(values[2], 0.25);
+  applyExpressions(dict, values, { blinkLeft: 0, blinkRight: 0, expressions: { mouthSmileLeft: 0 } });
+  assert.ok(values[0] > 0 && values[0] < 0.55, "eyelids open smoothly after closure");
+});

@@ -1,5 +1,7 @@
 # Experimento · Camera → Human Puppet
 
+**Issue #4 — nuevo actor disponible:** ejecutar el servidor indicado abajo y elegir **MPFB Actor · personaje experimental completo**. Incluye cuerpo/ropa, ojos texturizados y diez expresiones faciales; conserva los otros personajes. Es un prototipo funcional con materiales sencillos, no un acabado audiovisual final. [Generación, licencias y límites](assets/README.md#complete-experimental-actor-issue-4-rescue). Pruebas actuales: `node --test experiments/privacy-puppet-webcam/*.test.mjs` desde la raíz.
+
 Prueba web independiente para validar **PrivacyPuppet + MediaPipe**, antes de integrarlos en React. No reemplaza el MVP ni representa una demo aprobada.
 
 ## Ejecutar
@@ -54,3 +56,37 @@ Para generar un personaje humano completo con párpados: MPFB2 2.0.15+ en Blende
 - [Face Cap GLB en Three.js r184](https://github.com/mrdoob/three.js/blob/r184/examples/models/gltf/facecap.glb) — cabeza de muestra con expresiones ARKit, crédito a Face Cap; se carga remotamente y no se distribuye dentro de este repositorio.
 
 El experimento usa JavaScript nativo deliberadamente: minimiza dependencias y permite probar la hipótesis antes de portar la integración al stack React/TypeScript especificado.
+
+## Issue #3: evidencia y limitaciones verificadas
+
+El visor resuelve nombres ARKit, `eyeBlink_L/R` de FaceCap, `blink_left/right` y prefijos MPFB2 `!ex-`. Aplica el mismo resolvedor al diagnóstico y a la animación. Al perder el rostro neutraliza canales faciales controlados, sin alterar morphs demográficos. El diagnóstico desplegable muestra jerarquía, huesos y diccionarios exactos del GLB, nunca datos de cámara.
+
+FaceCap r184 también necesita Meshopt y KTX2/Basis: ahora se cargan sus decodificadores versionados al seleccionar un modelo comprimido, no al cargar Liam/Kofi/Yuki. El shader y los modelos originales no se reemplazaron.
+
+**MPFB · cabeza de prueba** es un GLB separado generado con Blender + los dos targets de parpadeo de `faceunits01`: tiene cierre geométrico real, pero NO conserva el aspecto de los actores ni tiene boca articulada. Sirve para comprobar el camino `!ex-` y la captura, no como reemplazo. [Licencias y reproducción PowerShell](assets/README.md).
+
+La inspección de los tres GLB originales confirmó solo 4–5 targets demográficos y ningún `eyeBlink*`, `blink_*` o `!ex-*`. Liam importado tiene 11.234 vértices de cuerpo; la basemesh MPFB tiene 19.158. Los targets MPFB son indexados: aplicarlos directamente al GLB reordenado/recortado no es una conversión segura. El árbol público fijado de PrivacyPuppet no incluye `.blend`, `.mhm` ni `.mhclo`; hace falta recuperar las fuentes originales o diseñar y validar un retarget de huesos para conservar sus apariencias. No se declara resuelto el parpadeo de esos tres actores.
+
+Prueba sin cámara: seleccionar FaceCap o la cabeza MPFB, pulsar **Probar parpadeo**, **Probar ojo izquierdo** y **Probar ojo derecho**. Cada pulso cierra durante 900 ms y vuelve al seguimiento/reposo; izquierda/derecha son anatómicas, no la posición en pantalla. Observar la secuencia 0 → 1 → 0. [MPFB abierto](../../docs/evidence/issue-3/mpfb-open.png) / [cerrado](../../docs/evidence/issue-3/mpfb-closed.png); [FaceCap abierto](../../docs/evidence/issue-3/facecap-open.png) / [cerrado](../../docs/evidence/issue-3/facecap-closed.png).
+
+Verificación local: `node --check app.js`, `node --check face-map.mjs` y `node --test face-map.test.mjs`: 7/7 pruebas. Los dos tests nuevos fallaron antes del arreglo y pasaron después. Navegador Chromium headless en Windows: carga de Liam, mandíbula manual visible y cierre bilateral/independiente/reapertura de FaceCap y MPFB observados. El navegador no resolvía el CDN: la prueba enrutó las mismas dependencias públicas descargadas a temporales; no demuestra disponibilidad del CDN. Único 404 restante: favicon.
+
+**Pendiente de aceptación:** webcam real (ambos ojos e independientes), cara neutra al perder detección en vivo, boca/dientes/lengua durante habla y reproducción de una grabación audiovisual; Chrome/Firefox interactivos y FPS con MediaPipe. No se activó cámara ni micrófono en la automatización. La captura y el grabador existentes no se modificaron; esto no equivale a haber validado la grabación completa.
+
+## Ajuste experimental de sensibilidad de párpados (rescate Issue #4)
+
+El valor que informa MediaPipe en la interfaz sigue siendo **crudo**: algunos cierres completos registran solo 45–55 %. El control **Cierre completo del párpado con señal de** transforma ese nivel en un morph target de cierre completo. Valor inicial: **50 %**, ajustable entre **35 y 90 %**. Si el avatar cierra demasiado fácil con ojos abiertos, **subí** el valor. Si queda entreabierto con ojos realmente cerrados, **bajalo**.
+
+La transformación usa curva suave con zona neutra 8 %. La velocidad de cierre del morph es mayor que la de apertura, para capturar parpadeos de poca duración sin cambiar mandíbula, sonrisa, cejas ni grabación. Esto solo afecta avatares que realmente tienen shape keys de párpados: FaceCap, MPFB de prueba o GLB propios compatibles. **No agrega párpados a Liam, Kofi y Yuki.**
+
+Validación pendiente: webcam real, falso positivo al mirar hacia abajo, sincronización izquierda/derecha y grabación audiovisual. El actor completo se generó y está disponible como `assets/mpfb-actor.glb`; `actor.test.mjs` ya se ejecuta en CI. La nueva geometría todavía requiere aceptación con webcam real, aunque el usuario validó previamente el seguimiento y grabador existentes.
+
+## Anatomía bucal incremental (Issue #4)
+
+**MPFB Actor · anatomía bucal experimental** es una opción separada que conserva el GLB completo anterior. Compara la geometría en [mandíbula cerrada original](../../docs/evidence/issue-4-mouth/before-0.png), [abierta original](../../docs/evidence/issue-4-mouth/before-100.png), [abierta con anatomía nueva](../../docs/evidence/issue-4-mouth/after-100.png), [sonrisa](../../docs/evidence/issue-4-mouth/after-smile.png) y [neutral nuevo](../../docs/evidence/issue-4-mouth/after-neutral-restored.png).
+
+La nueva exportación incluye una cavidad oral oscura, dentición superior fija al hueso de la cabeza, dentición inferior y lengua con `jawOpen`, y pesos morph neutrales. La geometría es procedimental; no se agregaron assets dentales externos. Es un paso visual de prototipo: no agrega visemas, fonemas o sincronización de habla, y no valida la cámara real ni el micrófono. MediaPipe, la calibración de parpadeo, el permiso de dispositivos y el grabador permanecen sin cambios.
+
+Pruebas automatizadas del asset: `node --test experiments/privacy-puppet-webcam/*.test.mjs`. La reproducción Blender y las licencias del actor están en [`assets/README.md`](assets/README.md#actor-con-anatomía-bucal-experimental).
+
+Capturas de la integración actual (cámara apagada): [reposo](../../docs/evidence/issue-4-mouth/app-neutral.png), [mandíbula abierta](../../docs/evidence/issue-4-mouth/app-jaw-100.png) y [reposo restaurado tras la prueba](../../docs/evidence/issue-4-mouth/app-neutral-restored.png).
