@@ -46,6 +46,8 @@ Exploration confirmed the current generator makes twelve low-profile ellipsoid t
 
 V2 size: 2,976,040 bytes. SHA-256: `60716d83e6430cb6098c952e54193e928f5ed0f0e5283232a7e6a93d99f9f59f`. Baseline actor and V1 hashes remain unchanged.
 
+Work-unit commit: `f9a9c8fba018c40b3a13273d9b706da390ad41e4` (`feat(actor): add opt-in natural mouth V2`).
+
 ## Relevant files
 
 - `experiments/privacy-puppet-webcam/tools/build-actor-mouth.py` — current procedural mouth generation.
