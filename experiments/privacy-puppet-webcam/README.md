@@ -94,3 +94,16 @@ La nueva exportación incluye una cavidad oral oscura, dentición superior fija 
 Pruebas automatizadas del asset: `node --test experiments/privacy-puppet-webcam/*.test.mjs`. La reproducción Blender y las licencias del actor están en [`assets/README.md`](assets/README.md#actor-con-anatomía-bucal-experimental). V2 se regenera con `--version v2` y un nombre de salida nuevo.
 
 Capturas de la integración actual (cámara apagada): [reposo](../../docs/evidence/issue-4-mouth/app-neutral.png), [mandíbula abierta](../../docs/evidence/issue-4-mouth/app-jaw-100.png) y [reposo restaurado tras la prueba](../../docs/evidence/issue-4-mouth/app-neutral-restored.png).
+
+
+## V3: reposo de boca y cejas visibles
+
+Seleccionar **MPFB Actor ? reposo y cejas V3** conserva todos los modelos anteriores y habilita dos controles exclusivos: zona de reposo de mand?bula (12% inicial) y se?al para apertura completa (80% inicial). Aumentar la zona de reposo si la boca responde a se?ales peque?as; disminuir la se?al de apertura completa si cuesta abrirla. Los valores del diagn?stico siguen mostrando MediaPipe crudo. Los valores iniciales son una propuesta de calibraci?n, no mediciones de una webcam.
+
+Se separaron dos defectos: el morph de mand?bula recib?a la se?al cruda sin zona muerta, mientras que una cuadr?cula de rayos en Blender detect? una abertura geom?trica neutra menor a 1 mm. V3 ajusta la parte inferior del labio un m?ximo de 1.2 mm en reposo, sin cambiar el extremo de apertura completa. No existe doble deformaci?n de mand?bula; los targets `mouthClose`/`mouthPucker` no est?n en este asset.
+
+Las cejas son pigmento UV casta?o sobre los mismos tri?ngulos de piel y siguen los cinco morphs de cejas y el esqueleto. No son objetos r?gidos o l?neas flotantes. El filtro de mand?bula V3 usa respuesta temporal (ataque 35 ms, cierre 65 ms), satura la apertura y vuelve a cero al perder el rostro; los dem?s avatares conservan su comportamiento.
+
+Prueba local desde la ra?z: `python -m http.server 8000`, abrir `http://localhost:8000/experiments/privacy-puppet-webcam/`, seleccionar V3 y usar la prueba manual de mand?bula. [Antes](../../docs/evidence/issue-4-v3/before-neutral.png), [reposo V3](../../docs/evidence/issue-4-v3/neutral.png), [cejas levantadas](../../docs/evidence/issue-4-v3/brows-up.png), [fruncidas](../../docs/evidence/issue-4-v3/brows-down.png), [parpadeo + giro](../../docs/evidence/issue-4-v3/blink-brows-rotated.png).
+
+Las capturas y las pruebas de se?al son sint?ticas, con c?mara/micr?fono apagados. Una secuencia de reposo de cinco segundos, apertura, cierre y p?rdida de rostro se comprob? dentro del visor; no valida habla real, los valores de tu c?mara, sincronizaci?n audiovisual ni rendimiento con MediaPipe. El grabador y la calibraci?n de p?rpados permanecen sin cambios. La aceptaci?n real corresponde al usuario.

@@ -32,15 +32,15 @@ Initial centerline inspection did not prove a lip gap. A broader Blender ray gri
 ## Tasks
 - [x] T1 (delegated direct; multi-file procedural asset and tests): add reproducible opt-in V3 asset generation with natural brows and neutral-mouth evidence; preserve existing assets.
 - [x] T2 (delegated direct; app integration and tests): add an isolated V3-only jaw profile/controls and pure tests for calibration, smoothing, reset, raw diagnostics, and legacy behavior.
-- [ ] T3 (delegated direct; docs and evidence): validate V3 synthetic poses and app profile integration, update asset/experiment documentation, record screenshots and verification limitations.
+- [x] T3 (delegated direct; docs and evidence): validate V3 synthetic poses and app profile integration, update asset/experiment documentation, record screenshots and verification limitations.
 
 ## Progress and evidence
 - Baseline `node --test experiments/privacy-puppet-webcam/*.test.mjs`: PASS, 16/16 on HEAD `8917702` before task work.
 - Effective TDD mode: enabled (parent-provided project instruction); exact runner above.
 - Task routing: delegated direct single writer, because implementation spans the procedural generator, app integration, tests, docs, and visual evidence. No SDD selected.
 - Forecast: three coherent work units, each targeted below ~400 authored changed lines where naturally possible; this is an advisory planning heuristic, not a hard cap.
-- T1 commit: `8e3608c`. Parent-owned native risk assessment remains pending.
-- Next step: finish documentation/evidence packaging and parent verification.
+- T1 commit: `8e3608c`; T2 commit: `3ccbec0`. Parent-owned native risk assessment remains pending.
+- Next step: parent verification, then user real-camera acceptance.
 
 ## Relevant files
 - `experiments/privacy-puppet-webcam/tools/build-actor-mouth.py` — procedural V1/V2 mouth GLB generator.
@@ -64,3 +64,10 @@ Initial centerline inspection did not prove a lip gap. A broader Blender ray gri
 - Frame-independent tests at 30/60/120 FPS, five seconds of synthetic rest noise, varying speech envelope, reset on face loss, unchanged legacy smoothing/blink, and raw-state immutability pass.
 - Actual viewer (test-only pose injection, no devices): rest input 4-10% for five seconds yielded jaw 0; 80% input yielded 0.9994 after 250 ms; close/loss returned 0. V2 still rendered raw 10% as 0.10, with V3 controls hidden. Raw meter stayed raw (7% while V3 morph was zero).
 - Rollback boundary: `jaw-profile.mjs`, its tests and the V3-only app/HTML wiring; capture, MediaPipe, blink calibration, face-map and recorder source remain unchanged.
+
+## T3 verified outcome
+- All 20 Node tests pass; app/face-map/jaw-profile syntax and Python compile pass; whitespace checks pass. Earlier camera, blink, head and recorder paths are unchanged.
+- Evidence in `docs/evidence/issue-4-v3/`: matched V2/V3 neutral, jaw 25/50/100, brow raise/frown, smile, blink+brows+head rotation, and actual viewer synthetic rest/open. Pictures inspected, with no detached brows or visible oral parts at neutral.
+- Browser QA used cached identical public dependencies because CDN availability is not the subject of this check. Only the existing favicon 404 remained; no failed requests. Synthetic pose injection was test-only and is not shipped in the viewer.
+- Camera/microphone were never accessed. Natural speech, live closed-mouth scores, recording/audio synchronization and performance with tracking remain for user approval; no new recording proof is claimed.
+- Delivery: existing gradual chained integration policy retained. No push/merge/main changes, no `.atl/` or temporary files included.

@@ -106,3 +106,20 @@ El selector del visor también se probó con el GLB V2 local y la prueba manual 
 El arnés de captura local es [`geometry-qa.html`](../../../docs/evidence/issue-4-mouth/geometry-qa.html); replica encuadre/luces del visor y recibe `actor`, `jaw`, `smile`, `blink`, `pitch`, `yaw` y `roll` por query string. No inicia el pipeline de cámara.
 
 La carpeta del proyecto contiene además un WebM sintético y silencioso de una validación anterior del pipeline (`docs/evidence/issue-4/actor-synthetic-silent.webm`), no una grabación de cámara/micrófono con este actor. El usuario informó que probó cámara y grabación; no hay archivo real aportado en el workspace para verificarlo independientemente. Por eso la evidencia adjunta confirma geometría y selección del actor, no aceptación audiovisual del nuevo asset.
+
+
+### V3: contacto labial y pigmento de cejas
+
+`mpfb-actor-mouth-v3.glb` es un asset optativo del mismo actor, no un reemplazo. Tama?o: 3,127,924 bytes; SHA-256 `f7c2f3c4cbf6f07600d4344f0cb87f5764ad07ad85e508c9ef2b589e4edb54e0`. Conserva el cuerpo, la dentici?n, la lengua, los diez morph targets y el esqueleto. La correcci?n de contacto labial es como m?ximo 1.2 mm y desaparece en el extremo `jawOpen=1`; el resto de deltas relativos se mantiene.
+
+La ceja usa una imagen UV original de 512x128 incorporada en el GLB, con borde difuminado y variaci?n tonal casta?a. Se asigna a regiones de la piel existente: comparte sus pesos del esqueleto y los targets de cejas. No incorpora geometr?a de pelo, assets externos ni nuevas licencias. Sigue el r?gimen de procedencia del actor descrito arriba.
+
+Regeneraci?n no destructiva con Blender 5.2.2 (la salida debe no existir):
+
+```powershell
+& 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-actor-mouth.py -- --input experiments/privacy-puppet-webcam/assets/mpfb-actor.glb --output "$env:TEMP/ia-cinema-mouth-v3.glb" --version v3
+```
+
+Se verific? una segunda exportaci?n id?ntica y rechazo de sobrescritura. El comportamiento por defecto contin?a siendo V1; V2 vuelve a producir su hash anterior. Las pruebas comprueban los tres hashes de referencia, pigmento sobre malla deformable, rayos que antes atravesaban la costura neutra y ahora encuentran labio, y respuesta de se?al sint?tica exclusiva de V3.
+
+L?mites: pigmento, no pelo individual; prueba de oclusi?n limitada a la costura encontrada, no solucionador universal de colisiones. No se mide ni se graba c?mara/micr?fono. Grabaci?n audiovisual y rendimiento real con MediaPipe deben ser aceptados por el usuario.
