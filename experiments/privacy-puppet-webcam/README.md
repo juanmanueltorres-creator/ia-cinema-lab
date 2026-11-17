@@ -85,8 +85,25 @@ Validación pendiente: webcam real, falso positivo al mirar hacia abajo, sincron
 
 **MPFB Actor · anatomía bucal experimental** es una opción separada que conserva el GLB completo anterior. Compara la geometría en [mandíbula cerrada original](../../docs/evidence/issue-4-mouth/before-0.png), [abierta original](../../docs/evidence/issue-4-mouth/before-100.png), [abierta con anatomía nueva](../../docs/evidence/issue-4-mouth/after-100.png), [sonrisa](../../docs/evidence/issue-4-mouth/after-smile.png) y [neutral nuevo](../../docs/evidence/issue-4-mouth/after-neutral-restored.png).
 
+**MPFB Actor · anatomía bucal V2** es una tercera opción optativa; no reemplaza el actor ni la exportación anterior. Sus coronas más anchas y diferenciadas reemplazan los dientes pequeños en forma de punta, con esmalte marfil mate y un tono de labio algo más rosado. Compará [V1 abierta](../../docs/evidence/issue-4-mouth/after-100.png) con [V2 abierta](../../docs/evidence/issue-4-mouth/after-v2-100.png), además de [reposo](../../docs/evidence/issue-4-mouth/after-v2-0.png), [25 %](../../docs/evidence/issue-4-mouth/after-v2-25.png), [50 %](../../docs/evidence/issue-4-mouth/after-v2-50.png), [sonrisa V1](../../docs/evidence/issue-4-mouth/after-smile.png) y [sonrisa V2](../../docs/evidence/issue-4-mouth/after-v2-smile.png). Ambas sonrisas usan mandíbula 0 y sonrisa 0.55; el resto son poses sintéticas, no una prueba con webcam.
+
+La selección y la prueba manual de mandíbula en el visor cargan el GLB V2 real: [captura de la app](../../docs/evidence/issue-4-mouth/app-v2-jaw-100.png). No se solicitó permiso de cámara ni micrófono.
+
 La nueva exportación incluye una cavidad oral oscura, dentición superior fija al hueso de la cabeza, dentición inferior y lengua con `jawOpen`, y pesos morph neutrales. La geometría es procedimental; no se agregaron assets dentales externos. Es un paso visual de prototipo: no agrega visemas, fonemas o sincronización de habla, y no valida la cámara real ni el micrófono. MediaPipe, la calibración de parpadeo, el permiso de dispositivos y el grabador permanecen sin cambios.
 
-Pruebas automatizadas del asset: `node --test experiments/privacy-puppet-webcam/*.test.mjs`. La reproducción Blender y las licencias del actor están en [`assets/README.md`](assets/README.md#actor-con-anatomía-bucal-experimental).
+Pruebas automatizadas del asset: `node --test experiments/privacy-puppet-webcam/*.test.mjs`. La reproducción Blender y las licencias del actor están en [`assets/README.md`](assets/README.md#actor-con-anatomía-bucal-experimental). V2 se regenera con `--version v2` y un nombre de salida nuevo.
 
 Capturas de la integración actual (cámara apagada): [reposo](../../docs/evidence/issue-4-mouth/app-neutral.png), [mandíbula abierta](../../docs/evidence/issue-4-mouth/app-jaw-100.png) y [reposo restaurado tras la prueba](../../docs/evidence/issue-4-mouth/app-neutral-restored.png).
+
+
+## V3: reposo de boca y cejas visibles
+
+Seleccionar **MPFB Actor ? reposo y cejas V3** conserva todos los modelos anteriores y habilita dos controles exclusivos: zona de reposo de mand?bula (12% inicial) y se?al para apertura completa (80% inicial). Aumentar la zona de reposo si la boca responde a se?ales peque?as; disminuir la se?al de apertura completa si cuesta abrirla. Los valores del diagn?stico siguen mostrando MediaPipe crudo. Los valores iniciales son una propuesta de calibraci?n, no mediciones de una webcam.
+
+Se separaron dos defectos: el morph de mand?bula recib?a la se?al cruda sin zona muerta, mientras que una cuadr?cula de rayos en Blender detect? una abertura geom?trica neutra menor a 1 mm. V3 ajusta la parte inferior del labio un m?ximo de 1.2 mm en reposo, sin cambiar el extremo de apertura completa. No existe doble deformaci?n de mand?bula; los targets `mouthClose`/`mouthPucker` no est?n en este asset.
+
+Las cejas son pigmento UV casta?o sobre los mismos tri?ngulos de piel y siguen los cinco morphs de cejas y el esqueleto. No son objetos r?gidos o l?neas flotantes. El filtro de mand?bula V3 usa respuesta temporal (ataque 35 ms, cierre 65 ms), satura la apertura y vuelve a cero al perder el rostro; los dem?s avatares conservan su comportamiento.
+
+Prueba local desde la ra?z: `python -m http.server 8000`, abrir `http://localhost:8000/experiments/privacy-puppet-webcam/`, seleccionar V3 y usar la prueba manual de mand?bula. [Antes](../../docs/evidence/issue-4-v3/before-neutral.png), [reposo V3](../../docs/evidence/issue-4-v3/neutral.png), [cejas levantadas](../../docs/evidence/issue-4-v3/brows-up.png), [fruncidas](../../docs/evidence/issue-4-v3/brows-down.png), [parpadeo + giro](../../docs/evidence/issue-4-v3/blink-brows-rotated.png).
+
+Las capturas y las pruebas de se?al son sint?ticas, con c?mara/micr?fono apagados. Una secuencia de reposo de cinco segundos, apertura, cierre y p?rdida de rostro se comprob? dentro del visor; no valida habla real, los valores de tu c?mara, sincronizaci?n audiovisual ni rendimiento con MediaPipe. El grabador y la calibraci?n de p?rpados permanecen sin cambios. La aceptaci?n real corresponde al usuario.

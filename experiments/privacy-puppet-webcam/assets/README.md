@@ -81,10 +81,45 @@ Con Blender 5.2+ y desde la raíz del repositorio:
 & 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-actor-mouth.py -- --input experiments/privacy-puppet-webcam/assets/mpfb-actor.glb --output experiments/privacy-puppet-webcam/assets/mpfb-actor-mouth.glb
 ```
 
-El generador exige otro archivo de salida que todavía no exista; nunca reemplaza el actor base ni un resultado anterior. El modelo nuevo excluye la esfera auxiliar sobredimensionada presente en el GLB de entrada, que de otro modo altera el encuadre. Tamaño: **2,849,196 bytes**. SHA-256: `eec96f6c69070db0c35ad78e2f8ba178f030e791172005499964e3ba6d679dd1`.
+El generador exige otro archivo de salida que todavía no exista; nunca reemplaza el actor base ni un resultado anterior. El modelo nuevo excluye la esfera auxiliar sobredimensionada presente en el GLB de entrada, que de otro modo altera el encuadre. Tamaño: **2,849,200 bytes**. SHA-256: `618873198684da0b8570b0036e84d92bee9d8c10500e4e2c6da60b3a539c4f67`.
 
 ### Evidencia visual sintética
 
 Las capturas se generaron en Chromium con el GLB real, sin webcam ni micrófono, aplicando canales morph directamente. [0% original](../../../docs/evidence/issue-4-mouth/before-0.png) · [100% original](../../../docs/evidence/issue-4-mouth/before-100.png) · [0% nuevo](../../../docs/evidence/issue-4-mouth/after-0.png) · [25%](../../../docs/evidence/issue-4-mouth/after-25.png) · [50%](../../../docs/evidence/issue-4-mouth/after-50.png) · [100% nuevo](../../../docs/evidence/issue-4-mouth/after-100.png) · [sonrisa](../../../docs/evidence/issue-4-mouth/after-smile.png) · [blink + mandíbula](../../../docs/evidence/issue-4-mouth/after-blink-jaw.png) · [cabeza girada + mandíbula](../../../docs/evidence/issue-4-mouth/after-rotated-jaw.png) · [neutral nuevo](../../../docs/evidence/issue-4-mouth/after-neutral-restored.png).
 
+### V2: coronas naturales y ajuste de material
+
+V2 conserva los doce dientes por arco y la cavidad/lengua originales, con coronas de incisivo más anchas y redondeadas, caninos y dientes posteriores más pequeños, esmalte marfil de mayor rugosidad, encía discreta y un tono de labio suavemente rosado. La mandíbula inferior, la encía inferior y la lengua siguen usando `jawOpen`; la piel mantiene sus targets ARKit. Las pruebas comparan AABB de cada corona para detectar solapamientos evidentes en cuatro pesos. Esto no equivale a un solucionador de colisiones ni a una validación dental anatómica.
+
+Generación optativa (Blender 5.2+, desde la raíz; la salida debe no existir):
+
+```powershell
+& 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-actor-mouth.py -- --input experiments/privacy-puppet-webcam/assets/mpfb-actor.glb --output experiments/privacy-puppet-webcam/assets/mpfb-actor-mouth-v2.glb --version v2
+```
+
+Sin `--version`, el generador conserva V1. Base y V1 permanecen intactos; V2 pesa **2,976,040 bytes**, SHA-256 `60716d83e6430cb6098c952e54193e928f5ed0f0e5283232a7e6a93d99f9f59f`. La selección del visor es optativa y no modifica el mapeo de expresiones, la cámara o la grabación.
+
+Evidencia sintética con el mismo visor, cámara e iluminación: [V2 neutral](../../../docs/evidence/issue-4-mouth/after-v2-0.png), [25 %](../../../docs/evidence/issue-4-mouth/after-v2-25.png), [50 %](../../../docs/evidence/issue-4-mouth/after-v2-50.png), [100 %](../../../docs/evidence/issue-4-mouth/after-v2-100.png), [sonrisa](../../../docs/evidence/issue-4-mouth/after-v2-smile.png) y [parpadeo + cabeza girada](../../../docs/evidence/issue-4-mouth/after-v2-blink-rotated.png). Las capturas V1 y V2 de sonrisa usan `jaw=0` y `smile=0.55`, para compararlas en la misma pose. La respuesta del navegador solo observó el asset y morphs sintéticos; no se usaron webcam ni micrófono.
+
+El selector del visor también se probó con el GLB V2 local y la prueba manual de mandíbula, con la cámara apagada: [captura de app](../../../docs/evidence/issue-4-mouth/app-v2-jaw-100.png). El navegador reportó un 404 de favicon, no solicitudes fallidas de los módulos ni del GLB.
+
 El arnés de captura local es [`geometry-qa.html`](../../../docs/evidence/issue-4-mouth/geometry-qa.html); replica encuadre/luces del visor y recibe `actor`, `jaw`, `smile`, `blink`, `pitch`, `yaw` y `roll` por query string. No inicia el pipeline de cámara.
+
+La carpeta del proyecto contiene además un WebM sintético y silencioso de una validación anterior del pipeline (`docs/evidence/issue-4/actor-synthetic-silent.webm`), no una grabación de cámara/micrófono con este actor. El usuario informó que probó cámara y grabación; no hay archivo real aportado en el workspace para verificarlo independientemente. Por eso la evidencia adjunta confirma geometría y selección del actor, no aceptación audiovisual del nuevo asset.
+
+
+### V3: contacto labial y pigmento de cejas
+
+`mpfb-actor-mouth-v3.glb` es un asset optativo del mismo actor, no un reemplazo. Tama?o: 3,127,924 bytes; SHA-256 `f7c2f3c4cbf6f07600d4344f0cb87f5764ad07ad85e508c9ef2b589e4edb54e0`. Conserva el cuerpo, la dentici?n, la lengua, los diez morph targets y el esqueleto. La correcci?n de contacto labial es como m?ximo 1.2 mm y desaparece en el extremo `jawOpen=1`; el resto de deltas relativos se mantiene.
+
+La ceja usa una imagen UV original de 512x128 incorporada en el GLB, con borde difuminado y variaci?n tonal casta?a. Se asigna a regiones de la piel existente: comparte sus pesos del esqueleto y los targets de cejas. No incorpora geometr?a de pelo, assets externos ni nuevas licencias. Sigue el r?gimen de procedencia del actor descrito arriba.
+
+Regeneraci?n no destructiva con Blender 5.2.2 (la salida debe no existir):
+
+```powershell
+& 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-actor-mouth.py -- --input experiments/privacy-puppet-webcam/assets/mpfb-actor.glb --output "$env:TEMP/ia-cinema-mouth-v3.glb" --version v3
+```
+
+Se verific? una segunda exportaci?n id?ntica y rechazo de sobrescritura. El comportamiento por defecto contin?a siendo V1; V2 vuelve a producir su hash anterior. Las pruebas comprueban los tres hashes de referencia, pigmento sobre malla deformable, rayos que antes atravesaban la costura neutra y ahora encuentran labio, y respuesta de se?al sint?tica exclusiva de V3.
+
+L?mites: pigmento, no pelo individual; prueba de oclusi?n limitada a la costura encontrada, no solucionador universal de colisiones. No se mide ni se graba c?mara/micr?fono. Grabaci?n audiovisual y rendimiento real con MediaPipe deben ser aceptados por el usuario.

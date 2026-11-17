@@ -48,6 +48,8 @@
           <option value="liam">Liam</option>
           <option value="mpfbactor">MPFB Actor · personaje experimental completo</option>
           <option value="mpfbactormouth">MPFB Actor · anatomía bucal experimental</option>
+          <option value="mpfbactormouthv2">MPFB Actor · anatomía bucal V2</option>
+          <option value="mpfbactormouthv3">MPFB Actor · reposo y cejas V3</option>
           <option value="yuki">Yuki</option>
           <option value="kofi">Kofi</option>
           <option value="facecap">FaceCap · prueba de párpados (ARKit)</option>
@@ -79,6 +81,13 @@
           <input id="blinkCloseAt" type="range" min="35" max="90" step="5" value="50" aria-label="Sensibilidad del cierre de párpados" />
           <small class="blink-hint">Si cerrás los ojos y quedan entreabiertos, bajá este valor. Los porcentajes anteriores muestran la señal original.</small>
           <p id="rigSupport">Comprobando capacidades del avatar...</p>
+          <div id="jawProfileControls" hidden>
+            <label class="blink-calibration" for="jawDeadzone">V3 · zona de reposo <strong id="jawDeadzoneValue">12%</strong></label>
+            <input id="jawDeadzone" type="range" min="0" max="30" value="12" step="1" aria-label="Zona de reposo de mandíbula V3" />
+            <label class="blink-calibration" for="jawFullAt">V3 · apertura completa con señal de <strong id="jawFullAtValue">80%</strong></label>
+            <input id="jawFullAt" type="range" min="40" max="100" value="80" step="5" aria-label="Señal para apertura completa V3" />
+            <small class="blink-hint">Solo V3. Aumentar la zona de reposo evita aperturas involuntarias; los porcentajes de diagnóstico siguen siendo crudos.</small>
+          </div>
           <details><summary>Canales exactos del GLB (sin datos faciales)</summary><pre id="rigChannels" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:12rem;overflow:auto"></pre></details>
         </div>
         <div class="actions">

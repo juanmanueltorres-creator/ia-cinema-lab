@@ -16,7 +16,7 @@ The original actor's jaw morph exposes the posterior skin surface and has no tee
 - Keep `assets/mpfb-actor.glb` byte-identical (baseline SHA-256 `b4a8118ab57f6e32a783e473e5e12767a5650b99b45b62d350196f7d996a6b9d`).
 - Do not modify MediaPipe, mapping, blink calibration or recording paths. No paid APIs, new global dependencies or uncertain-license assets.
 - Build only a distinct opt-in GLB; the generator refuses overwrite. Place lower dentition inside the mouth and attach it to jaw motion.
-- Route: delegated writer (multi-file asset/generator/test/docs/config behavior). TDD on; runner `node --test experiments/privacy-puppet-webcam/*.test.mjs` plus Blender headless export. Delivery strategy `ask-on-risk`; estimated authored change count was under 400 lines, generated binaries/screenshots excluded.
+- Route: delegated writer (multi-file asset/generator/test/docs/config behavior). TDD on; runner `node --test experiments/privacy-puppet-webcam/*.test.mjs` plus Blender headless export. Local packaging branch `experiment/issue4-mouth` is based on `experiment/issue4-rescate` at `a0808f440daa39f37678887fb4bf2a883320d5cd`. The user-selected integration chain targets that experimental branch, not `main`: slice 1 is the corrected mouth generator, GLB, and anatomical regression; slice 2 is the refreshed integration documentation and evidence. No remote operation is authorized here.
 
 ## Acceptance criteria
 - Separate generated GLB has a dark cavity behind the lips, upper dentition fixed to head, lower dentition and tongue moving on `jawOpen`.
@@ -37,22 +37,27 @@ The original actor's jaw morph exposes the posterior skin surface and has no tee
 
 ## Tasks
 - [x] MOUTH-01 — Baseline and generate the new mouth actor through an explicit opt-in script; preserve source GLB hash.
-- [x] MOUTH-02 — Prove GLB anatomy, attachment, neutral defaults, morph coexistence and overwrite safety.
-- [x] MOUTH-03 — Wire the selector entry, rebuild/provenance documentation, browser captures, verification and one Conventional Commit.
+- [x] MOUTH-02 — Extend the geometry regression to reject tooth collisions at jaw 0, .25, .5 and 1.
+- [x] MOUTH-03 — Correct dental proportions, regenerate the asset, refresh evidence/docs and commit the bounded fix.
 
 ## Progress
+- Parent review identified real intersections: adjacent tooth X extents overlap, and upper/lower vertical ranges overlap by about 6 mm at neutral. This invalidates the original geometry acceptance and requires one bounded correction.
+- RED/GREEN: geometry test failed on the old upper arch overlap at jaw 0; adjusted tooth width and inter-arch spacing. GLB geometry assertions now pass for both arches at jaw 0/.25/.5/1; the lower arch moves down monotonically.
 - Baseline `e1ff242877ed5fa2d4723a03ac05d5dd15d5e7e0`; branch `experiment/issue4-rescate`. Pre-existing untracked `.atl/` was preserved.
-- Existing suite baseline: 10/10. New full suite: 12/12.
-- New output SHA-256: `eec96f6c69070db0c35ad78e2f8ba178f030e791172005499964e3ba6d679dd1` (2,849,196 bytes). Second Blender build was byte-identical.
+- Existing suite baseline: 10/10. New full suite after the correction: 13/13.
+- New output SHA-256: `618873198684da0b8570b0036e84d92bee9d8c10500e4e2c6da60b3a539c4f67` (2,849,200 bytes). Second Blender build was byte-identical.
 - Original asset SHA-256 remains `b4a8118ab57f6e32a783e473e5e12767a5650b99b45b62d350196f7d996a6b9d`.
 - Blender source inspection found an oversized helper sphere in the input GLB that distorted fit if re-exported. The new generator omits it only in the new artifact.
 - Browser Chromium captured old/new geometry for jaw 0/25/50/100, smile, blink+jaw, rotated head+jaw and neutral. App selection and jaw test were also run with camera off; no camera or microphone was accessed.
 - Blender overwrite guard manually returned exit 1 with output hash unchanged.
 - Work-unit commit: `309270cad69a27031b3c343089a6572b33db3e82` (`feat(experiment): add opt-in mouth anatomy actor`).
+- Packaging slice 1: `cc1313c4ff5203ec34fbcdfe42125aa37a8795da` (`fix(experiment): separate mouth teeth across jaw poses`) updates only the generator, generated GLB and anatomy regression. Fresh post-commit verification: `node --test experiments/privacy-puppet-webcam/*.test.mjs` — 13/13; `node --check experiments/privacy-puppet-webcam/app.js` — passed; `node --check experiments/privacy-puppet-webcam/face-map.mjs` — passed; `git diff --check` — passed. The synthetic browser geometry screenshots were visually inspected; no device or recorder path was activated for this correction.
+- Packaging slice 2 is the refreshed README, task record and synthetic screenshots. It is intended to integrate after slice 1 on `experiment/issue4-rescate`; neither commit changes `main` or performs remote work.
 - Engram mirror pending: `mem_review(list)` returned `unknown_project` for `ia-cinema-lab`; no retries were made.
+- The user reports testing the real webcam and recording path. This workspace has no corresponding real-camera recording; `docs/evidence/issue-4/actor-synthetic-silent.webm` is historical synthetic/silent evidence and does not independently validate that report or this new asset.
 
 ## Next step
-No further implementation is authorized here. Real-camera/microphone acceptance remains intentionally untested; do not activate devices without later user approval.
+No further implementation is authorized here. The user-reported real-camera/recording validation is acknowledged, but this packaging work has no supplied real-media evidence to independently inspect; the attached synthetic evidence does not prove camera, microphone or recording acceptance.
 
 ## Relevant files
 - `experiments/privacy-puppet-webcam/tools/build-actor-mouth.py` — new non-overwriting procedural mouth builder.
