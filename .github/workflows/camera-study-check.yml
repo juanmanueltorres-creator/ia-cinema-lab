@@ -23,5 +23,9 @@ jobs:
         run: |
           node --check experiments/privacy-puppet-webcam/app.js
           node --check experiments/privacy-puppet-webcam/face-map.mjs
-      - name: Test face mapping
-        run: node --test experiments/privacy-puppet-webcam/face-map.test.mjs experiments/privacy-puppet-webcam/actor.test.mjs
+      - name: Test facial mapping and complete-actor geometry
+        run: |
+          node --test \
+            experiments/privacy-puppet-webcam/face-map.test.mjs \
+            experiments/privacy-puppet-webcam/actor.test.mjs \
+            experiments/privacy-puppet-webcam/actor-mouth.test.mjs
