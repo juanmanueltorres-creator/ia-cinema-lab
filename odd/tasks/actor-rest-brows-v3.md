@@ -4,7 +4,9 @@
 Deliver an opt-in V3 MPFB actor with a visually closed neutral mouth and natural brown brows, plus a V3-only jaw response profile that suppresses small resting noise without altering legacy actors or raw MediaPipe diagnostics.
 
 ## Problem and rationale
-The V2 jaw morph receives raw `jawOpen` directly through generic expression application, so its morph-only mouth has no rest deadzone or calibrated range. V2 also lacks visible brow pigment. Prior inspection did not establish a measurable neutral lip gap; the 20.3 mm lip bounds are not evidence of an opening, so avoid arbitrary lip-vertex edits. Use the V3 control profile to guard hypothetical resting scores; no live resting noise has been measured. Inspect neutral V3 geometry before changing the lips.
+The V2 jaw morph receives raw `jawOpen` directly, while the 0.12 deadzone only serves bone-driven jaws. V2 has no `jaw` bone (it is named `mandible_reference`), so there is no double jaw deformation. `mouthClose` and `mouthPucker` targets are absent. Live closed-mouth scores have not been measured.
+
+Initial centerline inspection did not prove a lip gap. A broader Blender ray grid found a narrow neutral aperture at x +/-3-10.5 mm and z 1.3266-1.327 m, exposing posterior material. V3 corrects that seam with a lower-lip lift of at most 1.2 mm; its full-open endpoint remains unchanged. Resting-score filtering is a separate, avatar-specific calibration guard, not evidence of a particular user's camera values.
 
 ## Scope
 - Add a deterministic, non-overwriting `--version v3` export at `assets/mpfb-actor-mouth-v3.glb`; preserve the base, V1, and V2 GLBs and generation behavior byte-for-byte.
@@ -29,7 +31,7 @@ The V2 jaw morph receives raw `jawOpen` directly through generic expression appl
 
 ## Tasks
 - [x] T1 (delegated direct; multi-file procedural asset and tests): add reproducible opt-in V3 asset generation with natural brows and neutral-mouth evidence; preserve existing assets.
-- [ ] T2 (delegated direct; app integration and tests): add an isolated V3-only jaw profile/controls and pure tests for calibration, smoothing, reset, raw diagnostics, and legacy behavior.
+- [x] T2 (delegated direct; app integration and tests): add an isolated V3-only jaw profile/controls and pure tests for calibration, smoothing, reset, raw diagnostics, and legacy behavior.
 - [ ] T3 (delegated direct; docs and evidence): validate V3 synthetic poses and app profile integration, update asset/experiment documentation, record screenshots and verification limitations.
 
 ## Progress and evidence
@@ -37,8 +39,8 @@ The V2 jaw morph receives raw `jawOpen` directly through generic expression appl
 - Effective TDD mode: enabled (parent-provided project instruction); exact runner above.
 - Task routing: delegated direct single writer, because implementation spans the procedural generator, app integration, tests, docs, and visual evidence. No SDD selected.
 - Forecast: three coherent work units, each targeted below ~400 authored changed lines where naturally possible; this is an advisory planning heuristic, not a hard cap.
-- Work-unit commits, native risk outcomes, and verification evidence: pending.
-- Next step: implement T1 after feature document and Engram mirror readback.
+- T1 commit: `8e3608c`. Parent-owned native risk assessment remains pending.
+- Next step: finish documentation/evidence packaging and parent verification.
 
 ## Relevant files
 - `experiments/privacy-puppet-webcam/tools/build-actor-mouth.py` — procedural V1/V2 mouth GLB generator.
@@ -52,7 +54,13 @@ The V2 jaw morph receives raw `jawOpen` directly through generic expression appl
 ## T1 verified outcome
 - New GLB: 3,127,924 bytes, SHA-256 `f7c2f3c4cbf6f07600d4344f0cb87f5764ad07ad85e508c9ef2b589e4edb54e0`.
 - RED: missing V3 asset; later exported-ray test failed on the real neutral aperture (front depth 0.053 m instead of lip depth >0.14 m). GREEN: both asset tests pass after bounded lower-lip correction.
-- Brow pigment is an original 512?128 embedded procedural UV texture on original skinned triangles; all five brow targets deform those vertices. No cards or detached brow object.
+- Brow pigment is an original 512x128 embedded procedural UV texture on original skinned triangles; all five brow targets deform those vertices. No cards or detached brow object.
 - Blender 5.2.2 reproduced V3 byte-for-byte; V2 regeneration still matches its preserved hash. Existing-output attempt refused with exit 1; hashes unchanged.
 - Browser neutral/up/down/blink+rotated images inspected; no detached brows or visible teeth at rest. Synthetic geometry only.
 - Rollback boundary: opt-in V3 generator branch, asset and asset regression tests. Earlier models remain unchanged.
+
+## T2 verified outcome
+- Pure-function tests failed RED before the isolated profile existed, then passed. V3 defaults: deadzone 12%, full at 80%, attack 35 ms, release 65 ms; both thresholds are adjustable only on V3. These are defaults, not measured camera calibration.
+- Frame-independent tests at 30/60/120 FPS, five seconds of synthetic rest noise, varying speech envelope, reset on face loss, unchanged legacy smoothing/blink, and raw-state immutability pass.
+- Actual viewer (test-only pose injection, no devices): rest input 4-10% for five seconds yielded jaw 0; 80% input yielded 0.9994 after 250 ms; close/loss returned 0. V2 still rendered raw 10% as 0.10, with V3 controls hidden. Raw meter stayed raw (7% while V3 morph was zero).
+- Rollback boundary: `jaw-profile.mjs`, its tests and the V3-only app/HTML wiring; capture, MediaPipe, blink calibration, face-map and recorder source remain unchanged.

@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FilesetResolver, FaceLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/+esm";
-import { mapFace, clamp, jawAngle, blinkWeight, expressionName, applyExpressions } from "./face-map.mjs";
+import { mapFace, clamp, jawAngle, blinkWeight, expressionName } from "./face-map.mjs";
+import { jawProfileFor, stepJaw, applyAvatarExpressions } from "./jaw-profile.mjs";
 
 // Isolated technical spike: no backend, no face uploads, no paid APIs.
 // Upstream sample models: PrivacyPuppet (MIT repository; see README and asset caveats).
@@ -15,6 +16,7 @@ const AVATARS = {
   mpfbactor: { url: "./assets/mpfb-actor.glb", fitBody: true, y: -1.45 },
   mpfbactormouth: { url: "./assets/mpfb-actor-mouth.glb", fitBody: true, y: -1.45 },
   mpfbactormouthv2: { url: "./assets/mpfb-actor-mouth-v2.glb", fitBody: true, y: -1.45 },
+  mpfbactormouthv3: { url: "./assets/mpfb-actor-mouth-v3.glb", fitBody: true, y: -1.45 },
   // Scan-style head with 52 ARKit shapes: visual test of real eyelid movement.
   // Source: Three.js examples, model supplied by Face Cap. No local redistribution.
   facecap: {
@@ -44,6 +46,9 @@ const testJaw = $("testJaw");
 let testJawUntil = 0;
 let testBlinkUntil = 0;
 let testBlinkSide = "both";
+let activeJawProfile = null;
+let filteredJaw = 0;
+let lastRigTime = null;
 
 
 let stream = null;
@@ -263,6 +268,10 @@ async function loadModel(name) {
     currentHeadOnly = Boolean(config.autoFit);
     root.add(currentModel);
     rig = getBones(currentModel);
+    activeJawProfile = jawProfileFor(name);
+    filteredJaw = 0;
+    lastRigTime = null;
+    $("jawProfileControls").hidden = !activeJawProfile;
     updateRigCapabilities();
     const label = name === "custom" ? "GLB propio" : name.toUpperCase();
     modelState.textContent = label + " · Modelo cargado";
@@ -295,6 +304,8 @@ function applyBone(node, rest, x, y = 0, z = 0, factor = 0.17) {
 }
 function animateRig(t) {
   if (!rig) return;
+  const seconds = lastRigTime === null ? 0 : Math.min(0.1, Math.max(0, t - lastRigTime));
+  lastRigTime = t;
   const state = { yaw: 0, pitch: 0, roll: 0, jaw: 0, blinkLeft: 0, blinkRight: 0, lookLeft: 0, ...pose };
   // Some cameras report only ~0.45–0.55 for fully closed eyes.
   // Retarget to a full eyelid morph without changing raw diagnostic values.
@@ -314,6 +325,13 @@ function animateRig(t) {
   if (performance.now() < testBlinkUntil) {
     state.blinkLeft = testBlinkSide === "right" ? 0 : 1;
     state.blinkRight = testBlinkSide === "left" ? 0 : 1;
+  }
+  if (activeJawProfile) {
+    filteredJaw = stepJaw(filteredJaw, state.jaw, seconds, {
+      detected: Boolean(pose) || performance.now() < testJawUntil,
+      deadzone: Number($("jawDeadzone").value) / 100,
+      full: Number($("jawFullAt").value) / 100,
+    });
   }
   const idle = Math.sin(t * 0.65) * 0.012;
   const { nodes, rest, meshes } = rig;
@@ -336,7 +354,7 @@ function animateRig(t) {
   for (const mesh of meshes) {
     const dict = mesh.morphTargetDictionary, influences = mesh.morphTargetInfluences;
     if (!dict || !influences) continue;
-    applyExpressions(dict, influences, state);
+    applyAvatarExpressions(dict, influences, state, activeJawProfile ? filteredJaw : undefined);
   }
 }
 
@@ -553,6 +571,9 @@ document.querySelectorAll("[data-blink]").forEach((button) => button.addEventLis
 blinkCloseAt.addEventListener("input", () => {
   blinkCloseValue.textContent = blinkCloseAt.value + "%";
 });
+for (const id of ["jawDeadzone", "jawFullAt"]) {
+  $(id).addEventListener("input", () => { $(id + "Value").textContent = $(id).value + "%"; });
+}
 avatarSelect.addEventListener("change", () => loadModel(avatarSelect.value));
 localAvatarInput.addEventListener("change", () => {
   const file = localAvatarInput.files?.[0];
