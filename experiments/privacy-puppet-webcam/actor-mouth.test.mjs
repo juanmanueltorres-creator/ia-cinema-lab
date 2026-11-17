@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 const mouthActor = process.env.MOUTH_ACTOR_ASSET ?? new URL('./assets/mpfb-actor-mouth.glb', import.meta.url);
+const mouthActorV2 = new URL('./assets/mpfb-actor-mouth-v2.glb', import.meta.url);
 const originalActor = new URL('./assets/mpfb-actor.glb', import.meta.url);
 
 function readGlb(file) {
@@ -159,4 +160,75 @@ test('separate teeth do not intersect through jaw opening and move with the jaw'
     assert.ok(center < previousCenter, `lower teeth move down at jaw ${jawWeight}`);
     previousCenter = center;
   }
+});
+
+test('V2 is an opt-in mouth asset with broader, anatomically varied crowns', () => {
+  assert.ok(existsSync(mouthActorV2), 'the V2 asset must be generated separately');
+  const { gltf, binary } = readGlb(mouthActorV2);
+  const upper = toothIslands(gltf, binary, 'Upper dentition');
+  const lower = toothIslands(gltf, binary, 'Lower dentition');
+  assert.equal(upper.length, 12);
+  assert.equal(lower.length, 12);
+  const widths = upper.sort((a, b) => a.min[0] - b.min[0])
+    .map((tooth) => tooth.max[0] - tooth.min[0]);
+  assert.ok(widths[5] > 0.005, 'front incisors should have visibly broader crowns than V1');
+  assert.ok(Math.max(...widths) - Math.min(...widths) > 0.001,
+    'incisors, canines, and posterior crowns should have distinct proportions');
+  const targetNames = gltf.meshes.flatMap((mesh) => mesh.extras?.targetNames ?? []);
+  for (const name of ['eyeBlinkLeft', 'eyeBlinkRight', 'jawOpen', 'mouthSmileLeft', 'mouthSmileRight']) {
+    assert.ok(targetNames.includes(name), `V2 must preserve ${name}`);
+  }
+  assert.ok(gltf.materials.some((material) => material.name.includes('Tooth enamel')
+    && material.pbrMetallicRoughness.roughnessFactor >= 0.35
+    && material.pbrMetallicRoughness.baseColorFactor[0] < 0.9),
+  'enamel should remain restrained and non-glossy');
+});
+
+test('V2 retains cavity, tongue and collision-free jaw morph bounds', () => {
+  assert.ok(existsSync(mouthActorV2));
+  const { gltf, binary } = readGlb(mouthActorV2);
+  const head = gltf.nodes.find((node) => node.name === 'head');
+  assert.ok(head, 'original head skeleton must remain');
+  assert.ok(gltf.materials.some((material) => material.name.includes('Gingiva')),
+    'gum tissue should soften the lip-to-crown transition');
+  for (const name of ['Oral cavity', 'Upper dentition', 'Lower dentition', 'Upper gingiva', 'Lower gingiva', 'Tongue']) {
+    const nodeIndex = gltf.nodes.findIndex((node) => node.name.includes(name));
+    assert.ok(nodeIndex >= 0, name);
+    assert.ok(head.children?.includes(nodeIndex), `${name} must follow head rotation`);
+  }
+  const lowerGingiva = gltf.nodes.find((node) => node.name === 'Lower gingiva');
+  const lowerGingivaTargets = gltf.meshes[lowerGingiva.mesh].extras?.targetNames ?? [];
+  assert.ok(lowerGingivaTargets.includes('jawOpen'), 'lower gingiva must follow the jaw');
+  for (const node of gltf.nodes) {
+    if (node.mesh === undefined) continue;
+    const weights = node.weights ?? gltf.meshes[node.mesh].weights ?? [];
+    assert.ok(weights.every((weight) => weight === 0), `${node.name} starts neutral`);
+  }
+  const upper = toothIslands(gltf, binary, 'Upper dentition');
+  let priorCenter = Infinity;
+  for (const jawWeight of [0, 0.25, 0.5, 1]) {
+    const lower = toothIslands(gltf, binary, 'Lower dentition', jawWeight);
+    for (const arch of [upper, lower]) {
+      const sorted = [...arch].sort((a, b) => a.min[0] - b.min[0]);
+      for (let index = 1; index < sorted.length; index++) {
+        assert.ok(sorted[index - 1].max[0] < sorted[index].min[0],
+          `adjacent crown bounds overlap at jaw ${jawWeight}: ${sorted[index - 1].max[0]} >= ${sorted[index].min[0]}`);
+      }
+    }
+    for (const top of upper) for (const bottom of lower) {
+      assert.ok(!boxesOverlap(top, bottom, 1e-4), `upper/lower crowns intersect at jaw ${jawWeight}`);
+    }
+    const center = lower.reduce((sum, box) => sum + (box.min[1] + box.max[1]) / 2, 0) / lower.length;
+    assert.ok(center < priorCenter, `lower crowns must follow jawOpen=${jawWeight}`);
+    priorCenter = center;
+  }
+});
+
+test('V2 remains opt-in through the existing actor selector', () => {
+  const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('./app.js', import.meta.url), 'utf8');
+  assert.match(html, /<option value="mpfbactormouthv2">/);
+  assert.match(app, /mpfbactormouthv2:\s*\{\s*url:\s*"\.\/assets\/mpfb-actor-mouth-v2\.glb"/);
+  assert.match(app, /mpfbactormouth:\s*\{\s*url:\s*"\.\/assets\/mpfb-actor-mouth\.glb"/,
+    'V1 must remain selectable');
 });

@@ -87,6 +87,22 @@ El generador exige otro archivo de salida que todavía no exista; nunca reemplaz
 
 Las capturas se generaron en Chromium con el GLB real, sin webcam ni micrófono, aplicando canales morph directamente. [0% original](../../../docs/evidence/issue-4-mouth/before-0.png) · [100% original](../../../docs/evidence/issue-4-mouth/before-100.png) · [0% nuevo](../../../docs/evidence/issue-4-mouth/after-0.png) · [25%](../../../docs/evidence/issue-4-mouth/after-25.png) · [50%](../../../docs/evidence/issue-4-mouth/after-50.png) · [100% nuevo](../../../docs/evidence/issue-4-mouth/after-100.png) · [sonrisa](../../../docs/evidence/issue-4-mouth/after-smile.png) · [blink + mandíbula](../../../docs/evidence/issue-4-mouth/after-blink-jaw.png) · [cabeza girada + mandíbula](../../../docs/evidence/issue-4-mouth/after-rotated-jaw.png) · [neutral nuevo](../../../docs/evidence/issue-4-mouth/after-neutral-restored.png).
 
+### V2: coronas naturales y ajuste de material
+
+V2 conserva los doce dientes por arco y la cavidad/lengua originales, con coronas de incisivo más anchas y redondeadas, caninos y dientes posteriores más pequeños, esmalte marfil de mayor rugosidad, encía discreta y un tono de labio suavemente rosado. La mandíbula inferior, la encía inferior y la lengua siguen usando `jawOpen`; la piel mantiene sus targets ARKit. Las pruebas comparan AABB de cada corona para detectar solapamientos evidentes en cuatro pesos. Esto no equivale a un solucionador de colisiones ni a una validación dental anatómica.
+
+Generación optativa (Blender 5.2+, desde la raíz; la salida debe no existir):
+
+```powershell
+& 'A:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python-exit-code 1 --python experiments/privacy-puppet-webcam/tools/build-actor-mouth.py -- --input experiments/privacy-puppet-webcam/assets/mpfb-actor.glb --output experiments/privacy-puppet-webcam/assets/mpfb-actor-mouth-v2.glb --version v2
+```
+
+Sin `--version`, el generador conserva V1. Base y V1 permanecen intactos; V2 pesa **2,976,040 bytes**, SHA-256 `60716d83e6430cb6098c952e54193e928f5ed0f0e5283232a7e6a93d99f9f59f`. La selección del visor es optativa y no modifica el mapeo de expresiones, la cámara o la grabación.
+
+Evidencia sintética con el mismo visor, cámara e iluminación: [V2 neutral](../../../docs/evidence/issue-4-mouth/after-v2-0.png), [25 %](../../../docs/evidence/issue-4-mouth/after-v2-25.png), [50 %](../../../docs/evidence/issue-4-mouth/after-v2-50.png), [100 %](../../../docs/evidence/issue-4-mouth/after-v2-100.png), [sonrisa](../../../docs/evidence/issue-4-mouth/after-v2-smile.png) y [parpadeo + cabeza girada](../../../docs/evidence/issue-4-mouth/after-v2-blink-rotated.png). La respuesta del navegador solo observó el asset y morphs sintéticos; no se usaron webcam ni micrófono.
+
+El selector del visor también se probó con el GLB V2 local y la prueba manual de mandíbula, con la cámara apagada: [captura de app](../../../docs/evidence/issue-4-mouth/app-v2-jaw-100.png). El navegador reportó un 404 de favicon, no solicitudes fallidas de los módulos ni del GLB.
+
 El arnés de captura local es [`geometry-qa.html`](../../../docs/evidence/issue-4-mouth/geometry-qa.html); replica encuadre/luces del visor y recibe `actor`, `jaw`, `smile`, `blink`, `pitch`, `yaw` y `roll` por query string. No inicia el pipeline de cámara.
 
 La carpeta del proyecto contiene además un WebM sintético y silencioso de una validación anterior del pipeline (`docs/evidence/issue-4/actor-synthetic-silent.webm`), no una grabación de cámara/micrófono con este actor. El usuario informó que probó cámara y grabación; no hay archivo real aportado en el workspace para verificarlo independientemente. Por eso la evidencia adjunta confirma geometría y selección del actor, no aceptación audiovisual del nuevo asset.
